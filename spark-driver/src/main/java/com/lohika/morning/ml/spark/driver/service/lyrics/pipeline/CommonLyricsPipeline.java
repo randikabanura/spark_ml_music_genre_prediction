@@ -1,16 +1,23 @@
 package com.lohika.morning.ml.spark.driver.service.lyrics.pipeline;
 
 import static com.lohika.morning.ml.spark.distributed.library.function.map.lyrics.Column.*;
+import static org.apache.spark.sql.functions.*;
+
+import com.lohika.morning.ml.spark.distributed.library.function.map.lyrics.Column;
 import com.lohika.morning.ml.spark.driver.service.MLService;
 import com.lohika.morning.ml.spark.driver.service.lyrics.Genre;
 import com.lohika.morning.ml.spark.driver.service.lyrics.GenrePrediction;
+
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+
 import org.apache.spark.ml.PipelineModel;
+import org.apache.spark.ml.feature.StringIndexer;
 import org.apache.spark.ml.linalg.DenseVector;
 import org.apache.spark.ml.tuning.CrossValidatorModel;
+import org.apache.spark.ml.tuning.TrainValidationSplitModel;
 import org.apache.spark.sql.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,11 +40,13 @@ public abstract class CommonLyricsPipeline implements LyricsPipeline {
     public GenrePrediction predict(final String unknownLyrics) {
         String lyrics[] = unknownLyrics.split("\\r?\\n");
         Dataset<String> lyricsDataset = sparkSession.createDataset(Arrays.asList(lyrics),
-           Encoders.STRING());
+                Encoders.STRING());
 
         Dataset<Row> unknownLyricsDataset = lyricsDataset
                 .withColumn(LABEL.getName(), functions.lit(Genre.UNKNOWN.getValue()))
                 .withColumn(ID.getName(), functions.lit("unknown.txt"));
+
+        unknownLyricsDataset = unknownLyricsDataset.withColumnRenamed("value", VALUE.getName());
 
         CrossValidatorModel model = mlService.loadCrossValidationModel(getModelDirectory());
         getModelStatistics(model);
@@ -56,7 +65,14 @@ public abstract class CommonLyricsPipeline implements LyricsPipeline {
             System.out.println("Probability: " + probability);
             System.out.println("------------------------------------------------\n");
 
-            return new GenrePrediction(getGenre(prediction).getName(), probability.apply(0), probability.apply(1));
+            return new GenrePrediction(getGenre(prediction).getName(),
+                    probability.apply(Genre.POP.getValue().intValue()),
+                    probability.apply(Genre.COUNTRY.getValue().intValue()),
+                    probability.apply(Genre.BLUES.getValue().intValue()),
+                    probability.apply(Genre.JAZZ.getValue().intValue()),
+                    probability.apply(Genre.REGGAE.getValue().intValue()),
+                    probability.apply(Genre.ROCK.getValue().intValue()),
+                    probability.apply(Genre.HIPHOP.getValue().intValue()));
         }
 
         System.out.println("------------------------------------------------\n");
@@ -64,8 +80,15 @@ public abstract class CommonLyricsPipeline implements LyricsPipeline {
     }
 
     Dataset<Row> readLyrics() {
-        Dataset input = readLyricsForGenre(lyricsTrainingSetDirectoryPath, Genre.METAL)
-                                                .union(readLyricsForGenre(lyricsTrainingSetDirectoryPath, Genre.POP));
+        Dataset input = readLyricsForGenre(lyricsTrainingSetDirectoryPath, Genre.POP)
+                .union(readLyricsForGenre(lyricsTrainingSetDirectoryPath, Genre.COUNTRY))
+                .union(readLyricsForGenre(lyricsTrainingSetDirectoryPath, Genre.BLUES))
+                .union(readLyricsForGenre(lyricsTrainingSetDirectoryPath, Genre.JAZZ))
+                .union(readLyricsForGenre(lyricsTrainingSetDirectoryPath, Genre.REGGAE))
+                .union(readLyricsForGenre(lyricsTrainingSetDirectoryPath, Genre.ROCK))
+                .union(readLyricsForGenre(lyricsTrainingSetDirectoryPath, Genre.HIPHOP));
+        input = input.withColumnRenamed(input.columns()[0], ID.getName());
+        input = input.withColumnRenamed(LABEL.getName(), LABEL_STRING.getName());
         // Reduce the input amount of partition minimal amount (spark.default.parallelism OR 2, whatever is less)
         input = input.coalesce(sparkSession.sparkContext().defaultMinPartitions()).cache();
         // Force caching.
@@ -75,27 +98,23 @@ public abstract class CommonLyricsPipeline implements LyricsPipeline {
     }
 
     private Dataset<Row> readLyricsForGenre(String inputDirectory, Genre genre) {
-        Dataset<Row> lyrics = readLyrics(inputDirectory, genre.name().toLowerCase() + "/*");
-        Dataset<Row> labeledLyrics = lyrics.withColumn(LABEL.getName(), functions.lit(genre.getValue()));
-
-        System.out.println(genre.name() + " music sentences = " + lyrics.count());
+        Dataset<Row> lyrics = readLyrics(inputDirectory);
+        Dataset<Row> labeledLyrics = lyrics.filter(lyrics.col(LABEL.getName()).equalTo(genre.getName().toLowerCase()));
+        System.out.println(genre.name() + " music sentences = " + labeledLyrics.count());
 
         return labeledLyrics;
     }
 
-    private Dataset<Row> readLyrics(String inputDirectory, String path) {
-        Dataset<String> rawLyrics = sparkSession.read().textFile(Paths.get(inputDirectory).resolve(path).toString());
+    private Dataset<Row> readLyrics(String inputDirectory) {
+        Dataset<Row> rawLyrics = sparkSession.read().option("header", "true").csv(inputDirectory);
         rawLyrics = rawLyrics.filter(rawLyrics.col(VALUE.getName()).notEqual(""));
         rawLyrics = rawLyrics.filter(rawLyrics.col(VALUE.getName()).contains(" "));
 
-        // Add source filename column as a unique id.
-        Dataset<Row> lyrics = rawLyrics.withColumn(ID.getName(), functions.input_file_name());
-
-        return lyrics;
+        return rawLyrics;
     }
 
     private Genre getGenre(Double value) {
-        for (Genre genre: Genre.values()){
+        for (Genre genre : Genre.values()) {
             if (genre.getValue().equals(value)) {
                 return genre;
             }
@@ -122,6 +141,10 @@ public abstract class CommonLyricsPipeline implements LyricsPipeline {
     }
 
     void saveModel(CrossValidatorModel model, String modelOutputDirectory) {
+        this.mlService.saveModel(model, modelOutputDirectory);
+    }
+
+    void saveModel(TrainValidationSplitModel model, String modelOutputDirectory) {
         this.mlService.saveModel(model, modelOutputDirectory);
     }
 

@@ -9,10 +9,8 @@ import org.apache.spark.ml.PipelineStage;
 import org.apache.spark.ml.Transformer;
 import org.apache.spark.ml.classification.NaiveBayes;
 import org.apache.spark.ml.evaluation.BinaryClassificationEvaluator;
-import org.apache.spark.ml.feature.CountVectorizer;
-import org.apache.spark.ml.feature.CountVectorizerModel;
-import org.apache.spark.ml.feature.StopWordsRemover;
-import org.apache.spark.ml.feature.Tokenizer;
+import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator;
+import org.apache.spark.ml.feature.*;
 import org.apache.spark.ml.param.ParamMap;
 import org.apache.spark.ml.tuning.CrossValidator;
 import org.apache.spark.ml.tuning.CrossValidatorModel;
@@ -25,6 +23,10 @@ public class NaiveBayesBagOfWordsPipeline extends CommonLyricsPipeline {
 
     public CrossValidatorModel classify() {
         Dataset sentences = readLyrics();
+
+        StringIndexer stringIndexer = new StringIndexer()
+                .setInputCol(LABEL_STRING.getName())
+                .setOutputCol(LABEL.getName());
 
         // Remove all punctuation symbols.
         Cleanser cleanser = new Cleanser();
@@ -53,10 +55,11 @@ public class NaiveBayesBagOfWordsPipeline extends CommonLyricsPipeline {
 
         CountVectorizer countVectorizer = new CountVectorizer().setInputCol(VERSE.getName()).setOutputCol("features");
 
-        NaiveBayes naiveBayes = new NaiveBayes();
+        NaiveBayes naiveBayes = new NaiveBayes().setLabelCol(LABEL.getName());
 
         Pipeline pipeline = new Pipeline().setStages(
                 new PipelineStage[]{
+                        stringIndexer,
                         cleanser,
                         numerator,
                         tokenizer,
@@ -75,7 +78,7 @@ public class NaiveBayesBagOfWordsPipeline extends CommonLyricsPipeline {
 
         CrossValidator crossValidator = new CrossValidator()
                 .setEstimator(pipeline)
-                .setEvaluator(new BinaryClassificationEvaluator())
+                .setEvaluator(new MulticlassClassificationEvaluator().setLabelCol(LABEL.getName()))
                 .setEstimatorParamMaps(paramGrid)
                 .setNumFolds(10);
 
@@ -92,8 +95,8 @@ public class NaiveBayesBagOfWordsPipeline extends CommonLyricsPipeline {
         PipelineModel bestModel = (PipelineModel) model.bestModel();
         Transformer[] stages = bestModel.stages();
 
-        modelStatistics.put("Sentences in verse", ((Verser) stages[7]).getSentencesInVerse());
-        modelStatistics.put("Vocabulary", ((CountVectorizerModel) stages[8]).vocabulary().length);
+        modelStatistics.put("Sentences in verse", ((Verser) stages[8]).getSentencesInVerse());
+        modelStatistics.put("Vocabulary", ((CountVectorizerModel) stages[9]).vocabulary().length);
 
         printModelStatistics(modelStatistics);
 

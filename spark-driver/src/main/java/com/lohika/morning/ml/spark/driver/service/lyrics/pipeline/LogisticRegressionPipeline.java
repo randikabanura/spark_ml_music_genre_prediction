@@ -10,10 +10,8 @@ import org.apache.spark.ml.Transformer;
 import org.apache.spark.ml.classification.LogisticRegression;
 import org.apache.spark.ml.classification.LogisticRegressionModel;
 import org.apache.spark.ml.evaluation.BinaryClassificationEvaluator;
-import org.apache.spark.ml.feature.StopWordsRemover;
-import org.apache.spark.ml.feature.Tokenizer;
-import org.apache.spark.ml.feature.Word2Vec;
-import org.apache.spark.ml.feature.Word2VecModel;
+import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator;
+import org.apache.spark.ml.feature.*;
 import org.apache.spark.ml.param.ParamMap;
 import org.apache.spark.ml.tuning.CrossValidator;
 import org.apache.spark.ml.tuning.CrossValidatorModel;
@@ -27,6 +25,10 @@ public class LogisticRegressionPipeline extends CommonLyricsPipeline {
 
     public CrossValidatorModel classify() {
         Dataset<Row> sentences = readLyrics();
+
+        StringIndexer stringIndexer = new StringIndexer()
+                .setInputCol(LABEL_STRING.getName())
+                .setOutputCol(LABEL.getName());
 
         Cleanser cleanser = new Cleanser();
 
@@ -52,10 +54,11 @@ public class LogisticRegressionPipeline extends CommonLyricsPipeline {
                                     .setOutputCol("features")
                                     .setMinCount(0);
 
-        LogisticRegression logisticRegression = new LogisticRegression();
+        LogisticRegression logisticRegression = new LogisticRegression().setLabelCol(LABEL.getName());
 
         Pipeline pipeline = new Pipeline().setStages(
                 new PipelineStage[]{
+                        stringIndexer,
                         cleanser,
                         numerator,
                         tokenizer,
@@ -76,7 +79,7 @@ public class LogisticRegressionPipeline extends CommonLyricsPipeline {
 
         CrossValidator crossValidator = new CrossValidator()
                 .setEstimator(pipeline)
-                .setEvaluator(new BinaryClassificationEvaluator())
+                .setEvaluator(new MulticlassClassificationEvaluator().setLabelCol(LABEL.getName()))
                 .setEstimatorParamMaps(paramGrid)
                 .setNumFolds(10);
 

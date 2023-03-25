@@ -24,6 +24,7 @@ ext {
   springBootVersion = '1.5.6.RELEASE'
   slf4jVersion = '1.7.25'
   logbackVersion = '1.2.3'
+  stemmerVersion = '3.0.3'
   sparkJacksonVersion = '2.8.9'
   sparkJaninoVersion = '2.7.8'
 

@@ -3,17 +3,18 @@ package com.lohika.morning.ml.spark.distributed.library.function.map.lyrics;
 import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
-import org.tartarus.snowball.SnowballStemmer;
+import org.tartarus.snowball.SnowballProgram;
+import org.tartarus.snowball.ext.EnglishStemmer;
 
 public class StemmingFunction implements MapFunction<Row, Row> {
 
-    private SnowballStemmer stemmer = initializeStemmer();
+    private SnowballProgram stemmer = initializeStemmer();
 
-    private SnowballStemmer initializeStemmer() {
+    private SnowballProgram initializeStemmer() {
         try {
-            Class stemClass = Class.forName("org.tartarus.snowball.ext.englishStemmer");
+           // Class stemClass = Class.forName("org.tartarus.snowball.ext.englishStemmer");
 
-            return (SnowballStemmer) stemClass.newInstance();
+            return new EnglishStemmer();
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }

@@ -4,6 +4,8 @@ import com.lohika.morning.ml.spark.distributed.library.function.map.lyrics.Colum
 import com.lohika.morning.ml.spark.distributed.library.function.map.lyrics.StemmingFunction;
 import java.io.IOException;
 import java.util.UUID;
+
+import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.ml.Transformer;
 import org.apache.spark.ml.param.ParamMap;
 import org.apache.spark.ml.util.*;
@@ -32,7 +34,12 @@ public class Stemmer extends Transformer implements MLWritable {
 
     @Override
     public Dataset<Row> transform(Dataset dataset) {
-        return dataset.map(new StemmingFunction(), RowEncoder.apply(this.transformSchema(dataset.schema())));
+        return dataset.map(new MapFunction<Row, Row>() {
+            @Override
+            public Row call(Row input) throws Exception {
+                return input;
+            }
+        }, RowEncoder.apply(this.transformSchema(dataset.schema())));
     }
 
     @Override

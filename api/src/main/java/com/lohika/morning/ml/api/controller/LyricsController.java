@@ -25,6 +25,13 @@ public class LyricsController {
         return new ResponseEntity<>(trainStatistics, HttpStatus.OK);
     }
 
+    @RequestMapping(value = "/statistics", method = RequestMethod.GET)
+    ResponseEntity<Map<String, Object>> statisticsLyricsModel() {
+        Map<String, Object> trainStatistics = lyricsService.getModelStatistics();
+
+        return new ResponseEntity<>(trainStatistics, HttpStatus.OK);
+    }
+
     @RequestMapping(value = "/predict", method = RequestMethod.POST)
     ResponseEntity<GenrePrediction> predictGenre(@RequestBody String unknownLyrics) {
         GenrePrediction genrePrediction = lyricsService.predictGenre(unknownLyrics);
