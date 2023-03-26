@@ -77,15 +77,23 @@ public class LogisticRegressionPipeline extends CommonLyricsPipeline {
                 .addGrid(logisticRegression.maxIter(), new int[] {100, 200})
                 .build();
 
+        Dataset<Row>[] splits = sentences.randomSplit(new double[] {0.8, 0.2}, 12345);
+        Dataset<Row> training = splits[0];
+        Dataset<Row> test = splits[1];
+
         CrossValidator crossValidator = new CrossValidator()
                 .setEstimator(pipeline)
-                .setEvaluator(new MulticlassClassificationEvaluator().setLabelCol(LABEL.getName()))
+                .setEvaluator(new MulticlassClassificationEvaluator().setLabelCol(LABEL.getName()).setMetricName("accuracy"))
                 .setEstimatorParamMaps(paramGrid)
                 .setNumFolds(10);
 
-        CrossValidatorModel model = crossValidator.fit(sentences);
+        CrossValidatorModel model = crossValidator.fit(training);
 
         saveModel(model, getModelDirectory());
+
+        model.transform(test)
+                .select("features", LABEL.getName(), "prediction")
+                .show();
 
         return model;
     }
@@ -96,11 +104,11 @@ public class LogisticRegressionPipeline extends CommonLyricsPipeline {
         PipelineModel bestModel = (PipelineModel) model.bestModel();
         Transformer[] stages = bestModel.stages();
 
-        modelStatistics.put("Sentences in verse", ((Verser) stages[7]).getSentencesInVerse());
-        modelStatistics.put("Word2Vec vocabulary", ((Word2VecModel) stages[8]).getVectors().count());
-        modelStatistics.put("Vector size", ((Word2VecModel) stages[8]).getVectorSize());
-        modelStatistics.put("Reg parameter", ((LogisticRegressionModel) stages[9]).getRegParam());
-        modelStatistics.put("Max iterations", ((LogisticRegressionModel) stages[9]).getMaxIter());
+        modelStatistics.put("Sentences in verse", ((Verser) stages[8]).getSentencesInVerse());
+        modelStatistics.put("Word2Vec vocabulary", ((Word2VecModel) stages[9]).getVectors().count());
+        modelStatistics.put("Vector size", ((Word2VecModel) stages[9]).getVectorSize());
+        modelStatistics.put("Reg parameter", ((LogisticRegressionModel) stages[10]).getRegParam());
+        modelStatistics.put("Max iterations", ((LogisticRegressionModel) stages[10]).getMaxIter());
 
         printModelStatistics(modelStatistics);
 

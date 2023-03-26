@@ -16,13 +16,14 @@ import org.apache.spark.ml.tuning.CrossValidator;
 import org.apache.spark.ml.tuning.CrossValidatorModel;
 import org.apache.spark.ml.tuning.ParamGridBuilder;
 import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.springframework.stereotype.Component;
 
 @Component("NaiveBayesBagOfWordsPipeline")
 public class NaiveBayesBagOfWordsPipeline extends CommonLyricsPipeline {
 
     public CrossValidatorModel classify() {
-        Dataset sentences = readLyrics();
+        Dataset<Row> sentences = readLyrics();
 
         StringIndexer stringIndexer = new StringIndexer()
                 .setInputCol(LABEL_STRING.getName())
@@ -76,6 +77,10 @@ public class NaiveBayesBagOfWordsPipeline extends CommonLyricsPipeline {
                 .addGrid(verser.sentencesInVerse(), new int[]{4, 8, 16})
                 .build();
 
+        Dataset<Row>[] splits = sentences.randomSplit(new double[] {0.8, 0.2}, 12345);
+        Dataset<Row> training = splits[0];
+        Dataset<Row> test = splits[1];
+
         CrossValidator crossValidator = new CrossValidator()
                 .setEstimator(pipeline)
                 .setEvaluator(new MulticlassClassificationEvaluator().setLabelCol(LABEL.getName()))
@@ -83,8 +88,12 @@ public class NaiveBayesBagOfWordsPipeline extends CommonLyricsPipeline {
                 .setNumFolds(10);
 
         // Run cross-validation, and choose the best set of parameters.
-        CrossValidatorModel model = crossValidator.fit(sentences);
+        CrossValidatorModel model = crossValidator.fit(training);
         saveModel(model, getModelDirectory());
+
+        model.transform(test)
+                .select("features", LABEL.getName(), "prediction")
+                .show();
 
         return model;
     }

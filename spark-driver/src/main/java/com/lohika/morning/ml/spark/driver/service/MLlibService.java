@@ -3,7 +3,6 @@ package com.lohika.morning.ml.spark.driver.service;
 import com.lohika.morning.ml.spark.distributed.library.function.verify.VerifyLogisticRegressionModel;
 import com.lohika.morning.ml.spark.distributed.library.function.verify.VerifyNaiveBayesModel;
 import com.lohika.morning.ml.spark.distributed.library.function.verify.VerifySVMModel;
-import com.lohika.morning.ml.spark.driver.service.mnist.MnistUtilityService;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.spark.api.java.JavaPairRDD;
@@ -25,67 +24,6 @@ public class MLlibService {
     @Autowired
     private SparkSession sparkSession;
 
-    @Autowired
-    private MnistUtilityService mnistUtilityService;
-
-    public Map<String, Object> trainLogisticRegression(String trainingSetParquetFilePath,
-                                                       String testSetParquetFilePath,
-                                                       int numClasses,
-                                                       String modelOutputPath) {
-        Tuple2<JavaRDD<LabeledPoint>, JavaRDD<LabeledPoint>> trainingAndTestDataSet = getTrainingAndTestDatasets(
-            trainingSetParquetFilePath, testSetParquetFilePath);
-
-        LogisticRegressionModel logisticRegressionModel = trainLogisticRegression(trainingAndTestDataSet._1(),
-                                                                                  trainingAndTestDataSet._2(),
-                                                                                  numClasses);
-
-        saveModel(logisticRegressionModel, modelOutputPath);
-
-        return validateLogisticRegression(trainingAndTestDataSet._1(),
-                                          trainingAndTestDataSet._2(),
-                                          logisticRegressionModel);
-    }
-
-    public void trainLogisticRegression(String fullSetParquetFilePath, int numClasses) {
-        Tuple2<JavaRDD<LabeledPoint>, JavaRDD<LabeledPoint>> trainingAndTestDataSet =
-            getTrainingAndTestDatasets(fullSetParquetFilePath);
-
-        trainLogisticRegression(trainingAndTestDataSet._1(), trainingAndTestDataSet._2(), numClasses);
-    }
-
-    public void trainNaiveBayes(String trainingSetParquetFilePath, String testSetParquetFilePath) {
-        Tuple2<JavaRDD<LabeledPoint>, JavaRDD<LabeledPoint>> trainingAndTestDataSet = getTrainingAndTestDatasets(
-                trainingSetParquetFilePath, testSetParquetFilePath);
-
-        trainNaiveBayes(trainingAndTestDataSet._1(), trainingAndTestDataSet._2());
-    }
-
-    public void trainNaiveBayes(String fullSetParquetFilePath) {
-        Tuple2<JavaRDD<LabeledPoint>, JavaRDD<LabeledPoint>> trainingAndTestDataSet = getTrainingAndTestDatasets(fullSetParquetFilePath);
-
-        trainNaiveBayes(trainingAndTestDataSet._1(), trainingAndTestDataSet._2());
-    }
-
-    public void trainSVM(String trainingSetParquetFilePath, String testSetParquetFilePath, int numIterations) {
-        Tuple2<JavaRDD<LabeledPoint>, JavaRDD<LabeledPoint>> trainingAndTestDataSet = getTrainingAndTestDatasets(
-                trainingSetParquetFilePath, testSetParquetFilePath);
-
-        trainSVM(trainingAndTestDataSet._1(), trainingAndTestDataSet._2(), numIterations);
-    }
-
-    public void trainSVM(String fullSetParquetFilePath, int numIterations) {
-        Tuple2<JavaRDD<LabeledPoint>, JavaRDD<LabeledPoint>> trainingAndTestDataSet = getTrainingAndTestDatasets(fullSetParquetFilePath);
-
-        trainSVM(trainingAndTestDataSet._1(), trainingAndTestDataSet._2(), numIterations);
-    }
-
-    private Tuple2<JavaRDD<LabeledPoint>, JavaRDD<LabeledPoint>> getTrainingAndTestDatasets(final String fullSetParquetFilePath) {
-        Dataset<Row> fullSetDataset = sparkSession.read().parquet(fullSetParquetFilePath);
-
-        JavaRDD<LabeledPoint> fullSet = mnistUtilityService.rowToLabeledPoint(fullSetDataset);
-
-        return getTrainingAndTestDatasets(fullSet);
-    }
 
     public Tuple2<JavaRDD<LabeledPoint>, JavaRDD<LabeledPoint>> getTrainingAndTestDatasets(JavaRDD<LabeledPoint> fullSet) {
         // Split initial RDD into two... [70% training data, 30% testing data].
@@ -98,21 +36,6 @@ public class MLlibService {
         testSet.count();
 
         return new Tuple2<>(trainingSet, testSet);
-    }
-
-    private Tuple2<JavaRDD<LabeledPoint>, JavaRDD<LabeledPoint>> getTrainingAndTestDatasets(
-            final String trainingSetParquetFilePath, final String testSetParquetFilePath) {
-        Dataset<Row> trainingSetDataset =sparkSession.read().parquet(trainingSetParquetFilePath);
-        trainingSetDataset.cache();
-        trainingSetDataset.count();
-
-        JavaRDD<LabeledPoint> trainingSetRDD = mnistUtilityService.rowToLabeledPoint(trainingSetDataset);
-
-        Dataset<Row> testSetDataset = sparkSession.read().parquet(testSetParquetFilePath);
-
-        JavaRDD<LabeledPoint> testSetRDD = mnistUtilityService.rowToLabeledPoint(testSetDataset);
-
-        return new Tuple2<>(trainingSetRDD, testSetRDD);
     }
 
     public LogisticRegressionModel trainLogisticRegression(JavaRDD<LabeledPoint> trainingSet, JavaRDD<LabeledPoint> testSet, int numClasses) {
