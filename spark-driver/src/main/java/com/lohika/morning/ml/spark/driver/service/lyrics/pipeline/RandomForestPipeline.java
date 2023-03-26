@@ -10,22 +10,25 @@ import org.apache.spark.ml.Transformer;
 import org.apache.spark.ml.classification.RandomForestClassificationModel;
 import org.apache.spark.ml.classification.RandomForestClassifier;
 import org.apache.spark.ml.evaluation.BinaryClassificationEvaluator;
-import org.apache.spark.ml.feature.StopWordsRemover;
-import org.apache.spark.ml.feature.Tokenizer;
-import org.apache.spark.ml.feature.Word2Vec;
-import org.apache.spark.ml.feature.Word2VecModel;
+import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator;
+import org.apache.spark.ml.feature.*;
 import org.apache.spark.ml.param.ParamMap;
 import org.apache.spark.ml.tuning.CrossValidator;
 import org.apache.spark.ml.tuning.CrossValidatorModel;
 import org.apache.spark.ml.tuning.ParamGridBuilder;
 import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.springframework.stereotype.Component;
 
 @Component("RandomForestPipeline")
 public class RandomForestPipeline extends CommonLyricsPipeline {
 
     public CrossValidatorModel classify() {
-        Dataset sentences = readLyrics();
+        Dataset<Row> sentences = readLyrics();
+
+        StringIndexer stringIndexer = new StringIndexer()
+                .setInputCol(LABEL_STRING.getName())
+                .setOutputCol(LABEL.getName());
 
         // Remove all punctuation symbols.
         Cleanser cleanser = new Cleanser();
@@ -59,6 +62,7 @@ public class RandomForestPipeline extends CommonLyricsPipeline {
 
         Pipeline pipeline = new Pipeline().setStages(
                 new PipelineStage[]{
+                        stringIndexer,
                         cleanser,
                         numerator,
                         tokenizer,
@@ -79,16 +83,24 @@ public class RandomForestPipeline extends CommonLyricsPipeline {
                 .addGrid(randomForest.maxBins(), new int[] {32, 64, 128})
                 .build();
 
+        Dataset<Row>[] splits = sentences.randomSplit(new double[] {0.8, 0.2}, 12345);
+        Dataset<Row> training = splits[0];
+        Dataset<Row> test = splits[1];
+
         CrossValidator crossValidator = new CrossValidator()
                 .setEstimator(pipeline)
-                .setEvaluator(new BinaryClassificationEvaluator())
+                .setEvaluator(new MulticlassClassificationEvaluator().setLabelCol(LABEL.getName()).setMetricName("accuracy"))
                 .setEstimatorParamMaps(paramGrid)
                 .setNumFolds(10);
 
         // Run cross-validation, and choose the best set of parameters.
-        CrossValidatorModel model = crossValidator.fit(sentences);
+        CrossValidatorModel model = crossValidator.fit(training);
 
         saveModel(model, getModelDirectory());
+
+        model.transform(test)
+                .select("features", LABEL.getName(), "prediction")
+                .show();
 
         return model;
     }
@@ -99,12 +111,12 @@ public class RandomForestPipeline extends CommonLyricsPipeline {
         PipelineModel bestModel = (PipelineModel) model.bestModel();
         Transformer[] stages = bestModel.stages();
 
-        modelStatistics.put("Sentences in verse", ((Verser) stages[7]).getSentencesInVerse());
-        modelStatistics.put("Word2Vec vocabulary", ((Word2VecModel) stages[8]).getVectors().count());
-        modelStatistics.put("Vector size", ((Word2VecModel) stages[8]).getVectorSize());
-        modelStatistics.put("Num trees", ((RandomForestClassificationModel) stages[9]).getNumTrees());
-        modelStatistics.put("Max bins", ((RandomForestClassificationModel) stages[9]).getMaxBins());
-        modelStatistics.put("Max depth", ((RandomForestClassificationModel) stages[9]).getMaxDepth());
+        modelStatistics.put("Sentences in verse", ((Verser) stages[8]).getSentencesInVerse());
+        modelStatistics.put("Word2Vec vocabulary", ((Word2VecModel) stages[9]).getVectors().count());
+        modelStatistics.put("Vector size", ((Word2VecModel) stages[9]).getVectorSize());
+        modelStatistics.put("Num trees", ((RandomForestClassificationModel) stages[10]).getNumTrees());
+        modelStatistics.put("Max bins", ((RandomForestClassificationModel) stages[10]).getMaxBins());
+        modelStatistics.put("Max depth", ((RandomForestClassificationModel) stages[10]).getMaxDepth());
 
         printModelStatistics(modelStatistics);
 
