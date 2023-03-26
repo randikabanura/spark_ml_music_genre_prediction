@@ -83,7 +83,7 @@ public class NaiveBayesBagOfWordsPipeline extends CommonLyricsPipeline {
 
         CrossValidator crossValidator = new CrossValidator()
                 .setEstimator(pipeline)
-                .setEvaluator(new MulticlassClassificationEvaluator().setLabelCol(LABEL.getName()))
+                .setEvaluator(new MulticlassClassificationEvaluator().setLabelCol(LABEL.getName()).setMetricName("accuracy"))
                 .setEstimatorParamMaps(paramGrid)
                 .setNumFolds(10);
 
