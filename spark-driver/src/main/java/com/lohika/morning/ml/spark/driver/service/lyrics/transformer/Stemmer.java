@@ -11,9 +11,13 @@ import org.apache.spark.ml.param.ParamMap;
 import org.apache.spark.ml.util.*;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.catalyst.encoders.RowEncoder;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
+import org.tartarus.snowball.SnowballProgram;
+import org.tartarus.snowball.SnowballStemmer;
+import org.tartarus.snowball.ext.EnglishStemmer;
 
 public class Stemmer extends Transformer implements MLWritable {
 
@@ -34,12 +38,7 @@ public class Stemmer extends Transformer implements MLWritable {
 
     @Override
     public Dataset<Row> transform(Dataset dataset) {
-        return dataset.map(new MapFunction<Row, Row>() {
-            @Override
-            public Row call(Row input) throws Exception {
-                return input;
-            }
-        }, RowEncoder.apply(this.transformSchema(dataset.schema())));
+        return dataset.map(new StemmingFunction(), RowEncoder.apply(this.transformSchema(dataset.schema())));
     }
 
     @Override

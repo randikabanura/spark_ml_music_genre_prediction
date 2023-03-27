@@ -8,20 +8,9 @@ import org.tartarus.snowball.ext.EnglishStemmer;
 
 public class StemmingFunction implements MapFunction<Row, Row> {
 
-    private SnowballProgram stemmer = initializeStemmer();
-
-    private SnowballProgram initializeStemmer() {
-        try {
-           // Class stemClass = Class.forName("org.tartarus.snowball.ext.englishStemmer");
-
-            return new EnglishStemmer();
-        } catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
-        }
-    }
-
     @Override
     public Row call(Row input) throws Exception {
+        SnowballProgram stemmer = new EnglishStemmer();
         stemmer.setCurrent(input.getAs(Column.FILTERED_WORD.getName()));
         stemmer.stem();
         String stemmedWord = stemmer.getCurrent();
