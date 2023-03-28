@@ -58,7 +58,7 @@ public class RandomForestPipeline extends CommonLyricsPipeline {
         // Create model.
         Word2Vec word2Vec = new Word2Vec().setInputCol(VERSE.getName()).setOutputCol("features").setMinCount(0);
 
-        RandomForestClassifier randomForest = new RandomForestClassifier();
+        RandomForestClassifier randomForest = new RandomForestClassifier().setLabelCol(LABEL.getName());;
 
         Pipeline pipeline = new Pipeline().setStages(
                 new PipelineStage[]{

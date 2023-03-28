@@ -9,12 +9,14 @@ import org.apache.spark.ml.PipelineStage;
 import org.apache.spark.ml.Transformer;
 import org.apache.spark.ml.classification.NaiveBayes;
 import org.apache.spark.ml.evaluation.BinaryClassificationEvaluator;
+import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator;
 import org.apache.spark.ml.feature.*;
 import org.apache.spark.ml.param.ParamMap;
 import org.apache.spark.ml.tuning.CrossValidator;
 import org.apache.spark.ml.tuning.CrossValidatorModel;
 import org.apache.spark.ml.tuning.ParamGridBuilder;
 import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.springframework.stereotype.Component;
 
 @Component("NaiveBayesTFIDFPipeline")
@@ -22,6 +24,10 @@ public class NaiveBayesTFIDFPipeline extends CommonLyricsPipeline {
 
     public CrossValidatorModel classify() {
         Dataset sentences = readLyrics();
+
+        StringIndexer stringIndexer = new StringIndexer()
+                .setInputCol(LABEL_STRING.getName())
+                .setOutputCol(LABEL.getName());
 
         // Remove all punctuation symbols.
         Cleanser cleanser = new Cleanser();
@@ -54,10 +60,11 @@ public class NaiveBayesTFIDFPipeline extends CommonLyricsPipeline {
 
         IDF idf = new IDF().setInputCol("rawFeatures").setOutputCol("features");
 
-        NaiveBayes naiveBayes = new NaiveBayes();
+        NaiveBayes naiveBayes = new NaiveBayes().setLabelCol(LABEL.getName());
 
         Pipeline pipeline = new Pipeline().setStages(
                 new PipelineStage[]{
+                        stringIndexer,
                         cleanser,
                         numerator,
                         tokenizer,
@@ -77,15 +84,24 @@ public class NaiveBayesTFIDFPipeline extends CommonLyricsPipeline {
                 .addGrid(idf.minDocFreq(), new int[]{0, 1, 2})
                 .build();
 
+        Dataset<Row>[] splits = sentences.randomSplit(new double[] {0.8, 0.2}, 12345);
+        Dataset<Row> training = splits[0];
+        Dataset<Row> test = splits[1];
+
         CrossValidator crossValidator = new CrossValidator()
                 .setEstimator(pipeline)
-                .setEvaluator(new BinaryClassificationEvaluator())
+                .setEvaluator(new MulticlassClassificationEvaluator().setLabelCol(LABEL.getName()).setMetricName("accuracy"))
                 .setEstimatorParamMaps(paramGrid)
                 .setNumFolds(10);
 
         // Run cross-validation, and choose the best set of parameters.
-        CrossValidatorModel model = crossValidator.fit(sentences);
+        CrossValidatorModel model = crossValidator.fit(training);
+
         saveModel(model, getModelDirectory());
+
+        model.transform(test)
+                .select("features", LABEL.getName(), "prediction")
+                .show();
 
         return model;
     }
@@ -96,9 +112,9 @@ public class NaiveBayesTFIDFPipeline extends CommonLyricsPipeline {
         PipelineModel bestModel = (PipelineModel) model.bestModel();
         Transformer[] stages = bestModel.stages();
 
-        modelStatistics.put("Sentences in verse", ((Verser) stages[7]).getSentencesInVerse());
-        modelStatistics.put("Num features", ((HashingTF) stages[8]).getNumFeatures());
-        modelStatistics.put("Min doc frequency", ((IDFModel) stages[9]).getMinDocFreq());
+        modelStatistics.put("Sentences in verse", ((Verser) stages[8]).getSentencesInVerse());
+        modelStatistics.put("Num features", ((HashingTF) stages[9]).getNumFeatures());
+        modelStatistics.put("Min doc frequency", ((IDFModel) stages[10]).getMinDocFreq());
 
         printModelStatistics(modelStatistics);
 
