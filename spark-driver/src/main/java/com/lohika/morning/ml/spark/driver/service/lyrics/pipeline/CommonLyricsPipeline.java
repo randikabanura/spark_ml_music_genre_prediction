@@ -18,6 +18,7 @@ import org.apache.spark.ml.feature.StringIndexer;
 import org.apache.spark.ml.linalg.DenseVector;
 import org.apache.spark.ml.tuning.CrossValidatorModel;
 import org.apache.spark.ml.tuning.TrainValidationSplitModel;
+import org.apache.spark.ml.tuning.TrainValidationSplitModel;
 import org.apache.spark.sql.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -48,7 +49,7 @@ public abstract class CommonLyricsPipeline implements LyricsPipeline {
 
         unknownLyricsDataset = unknownLyricsDataset.withColumnRenamed("value", VALUE.getName());
 
-        CrossValidatorModel model = mlService.loadCrossValidationModel(getModelDirectory());
+        TrainValidationSplitModel model = mlService.loadCrossValidationModel(getModelDirectory());
         getModelStatistics(model);
 
         PipelineModel bestModel = (PipelineModel) model.bestModel();
@@ -124,11 +125,11 @@ public abstract class CommonLyricsPipeline implements LyricsPipeline {
     }
 
     @Override
-    public Map<String, Object> getModelStatistics(CrossValidatorModel model) {
+    public Map<String, Object> getModelStatistics(TrainValidationSplitModel model) {
         Map<String, Object> modelStatistics = new HashMap<>();
 
-        Arrays.sort(model.avgMetrics());
-        modelStatistics.put("Best model metrics", model.avgMetrics()[model.avgMetrics().length - 1]);
+       /* Arrays.sort(model.);
+        modelStatistics.put("Best model metrics", model.avgMetrics()[model.avgMetrics().length - 1]);*/
 
         return modelStatistics;
     }

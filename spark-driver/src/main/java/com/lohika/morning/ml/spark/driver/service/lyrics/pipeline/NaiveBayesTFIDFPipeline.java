@@ -12,8 +12,8 @@ import org.apache.spark.ml.evaluation.BinaryClassificationEvaluator;
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator;
 import org.apache.spark.ml.feature.*;
 import org.apache.spark.ml.param.ParamMap;
-import org.apache.spark.ml.tuning.CrossValidator;
-import org.apache.spark.ml.tuning.CrossValidatorModel;
+import org.apache.spark.ml.tuning.TrainValidationSplit;
+import org.apache.spark.ml.tuning.TrainValidationSplitModel;
 import org.apache.spark.ml.tuning.ParamGridBuilder;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -22,7 +22,7 @@ import org.springframework.stereotype.Component;
 @Component("NaiveBayesTFIDFPipeline")
 public class NaiveBayesTFIDFPipeline extends CommonLyricsPipeline {
 
-    public CrossValidatorModel classify() {
+    public TrainValidationSplitModel classify() {
         Dataset sentences = readLyrics();
 
         StringIndexer stringIndexer = new StringIndexer()
@@ -60,7 +60,8 @@ public class NaiveBayesTFIDFPipeline extends CommonLyricsPipeline {
 
         IDF idf = new IDF().setInputCol("rawFeatures").setOutputCol("features");
 
-        NaiveBayes naiveBayes = new NaiveBayes().setLabelCol(LABEL.getName());
+        NaiveBayes naiveBayes = new NaiveBayes().setFeaturesCol("features")
+                .setLabelCol(LABEL.getName());
 
         Pipeline pipeline = new Pipeline().setStages(
                 new PipelineStage[]{
@@ -84,18 +85,18 @@ public class NaiveBayesTFIDFPipeline extends CommonLyricsPipeline {
                 .addGrid(idf.minDocFreq(), new int[]{0, 1, 2})
                 .build();
 
-        Dataset<Row>[] splits = sentences.randomSplit(new double[] {0.8, 0.2}, 12345);
+        Dataset<Row>[] splits = sentences.randomSplit(new double[] {0.9, 0.1}, 432432423);
         Dataset<Row> training = splits[0];
         Dataset<Row> test = splits[1];
 
-        CrossValidator crossValidator = new CrossValidator()
+        TrainValidationSplit TrainValidationSplit = new TrainValidationSplit()
                 .setEstimator(pipeline)
                 .setEvaluator(new MulticlassClassificationEvaluator().setLabelCol(LABEL.getName()).setMetricName("accuracy"))
-                .setEstimatorParamMaps(paramGrid)
-                .setNumFolds(10);
+                .setEstimatorParamMaps(paramGrid).setTrainRatio(0.8);
+                
 
         // Run cross-validation, and choose the best set of parameters.
-        CrossValidatorModel model = crossValidator.fit(training);
+        TrainValidationSplitModel model = TrainValidationSplit.fit(training);
 
         saveModel(model, getModelDirectory());
 
@@ -106,7 +107,7 @@ public class NaiveBayesTFIDFPipeline extends CommonLyricsPipeline {
         return model;
     }
 
-    public Map<String, Object> getModelStatistics(CrossValidatorModel model) {
+    public Map<String, Object> getModelStatistics(TrainValidationSplitModel model) {
         Map<String, Object> modelStatistics = super.getModelStatistics(model);
 
         PipelineModel bestModel = (PipelineModel) model.bestModel();

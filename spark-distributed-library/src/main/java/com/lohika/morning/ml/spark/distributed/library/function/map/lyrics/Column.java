@@ -18,6 +18,7 @@ public enum Column {
 
     LABEL_STRING("genre_string", DataTypes.StringType),
     LABEL("genre", DataTypes.DoubleType),
+    LABEL_NEW("label", DataTypes.DoubleType),
 
     FILTERED_WORD("filteredWord", DataTypes.StringType),
 

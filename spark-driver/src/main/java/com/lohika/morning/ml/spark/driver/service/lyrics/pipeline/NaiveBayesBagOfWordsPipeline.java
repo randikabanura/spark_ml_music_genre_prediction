@@ -12,8 +12,9 @@ import org.apache.spark.ml.evaluation.BinaryClassificationEvaluator;
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator;
 import org.apache.spark.ml.feature.*;
 import org.apache.spark.ml.param.ParamMap;
-import org.apache.spark.ml.tuning.CrossValidator;
-import org.apache.spark.ml.tuning.CrossValidatorModel;
+import org.apache.spark.ml.tuning.TrainValidationSplit;
+import org.apache.spark.ml.tuning.TrainValidationSplit;
+import org.apache.spark.ml.tuning.TrainValidationSplitModel;
 import org.apache.spark.ml.tuning.ParamGridBuilder;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -22,7 +23,7 @@ import org.springframework.stereotype.Component;
 @Component("NaiveBayesBagOfWordsPipeline")
 public class NaiveBayesBagOfWordsPipeline extends CommonLyricsPipeline {
 
-    public CrossValidatorModel classify() {
+    public TrainValidationSplitModel classify() {
         Dataset<Row> sentences = readLyrics();
 
         StringIndexer stringIndexer = new StringIndexer()
@@ -81,14 +82,14 @@ public class NaiveBayesBagOfWordsPipeline extends CommonLyricsPipeline {
         Dataset<Row> training = splits[0];
         Dataset<Row> test = splits[1];
 
-        CrossValidator crossValidator = new CrossValidator()
+        TrainValidationSplit TrainValidationSplit = new TrainValidationSplit()
                 .setEstimator(pipeline)
                 .setEvaluator(new MulticlassClassificationEvaluator().setLabelCol(LABEL.getName()).setMetricName("accuracy"))
-                .setEstimatorParamMaps(paramGrid)
-                .setNumFolds(10);
+                .setEstimatorParamMaps(paramGrid).setTrainRatio(0.8);
+                
 
         // Run cross-validation, and choose the best set of parameters.
-        CrossValidatorModel model = crossValidator.fit(training);
+        TrainValidationSplitModel model = TrainValidationSplit.fit(training);
         saveModel(model, getModelDirectory());
 
         model.transform(test)
@@ -98,7 +99,7 @@ public class NaiveBayesBagOfWordsPipeline extends CommonLyricsPipeline {
         return model;
     }
 
-    public Map<String, Object> getModelStatistics(CrossValidatorModel model) {
+    public Map<String, Object> getModelStatistics(TrainValidationSplitModel model) {
         Map<String, Object> modelStatistics = super.getModelStatistics(model);
 
         PipelineModel bestModel = (PipelineModel) model.bestModel();

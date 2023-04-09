@@ -9,13 +9,16 @@ import org.apache.spark.ml.PipelineStage;
 import org.apache.spark.ml.Transformer;
 import org.apache.spark.ml.classification.LogisticRegression;
 import org.apache.spark.ml.classification.LogisticRegressionModel;
+import org.apache.spark.ml.classification.OneVsRest;
 import org.apache.spark.ml.evaluation.BinaryClassificationEvaluator;
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator;
 import org.apache.spark.ml.feature.*;
 import org.apache.spark.ml.param.ParamMap;
-import org.apache.spark.ml.tuning.CrossValidator;
-import org.apache.spark.ml.tuning.CrossValidatorModel;
+import org.apache.spark.ml.param.ParamPair;
+import org.apache.spark.ml.tuning.TrainValidationSplit;
+import org.apache.spark.ml.tuning.TrainValidationSplitModel;
 import org.apache.spark.ml.tuning.ParamGridBuilder;
+import org.apache.spark.ml.tuning.TrainValidationSplitModel;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.springframework.stereotype.Component;
@@ -23,7 +26,7 @@ import org.springframework.stereotype.Component;
 @Component("LogisticRegressionPipeline")
 public class LogisticRegressionPipeline extends CommonLyricsPipeline {
 
-    public CrossValidatorModel classify() {
+    public TrainValidationSplitModel classify() {
         Dataset<Row> sentences = readLyrics();
 
         StringIndexer stringIndexer = new StringIndexer()
@@ -54,7 +57,9 @@ public class LogisticRegressionPipeline extends CommonLyricsPipeline {
                                     .setOutputCol("features")
                                     .setMinCount(0);
 
-        LogisticRegression logisticRegression = new LogisticRegression().setLabelCol(LABEL.getName());
+        LogisticRegression logisticRegression = new LogisticRegression()
+                .setElasticNetParam(1D)
+                .setLabelCol(LABEL.getName());
 
         Pipeline pipeline = new Pipeline().setStages(
                 new PipelineStage[]{
@@ -71,23 +76,25 @@ public class LogisticRegressionPipeline extends CommonLyricsPipeline {
                         logisticRegression});
 
         ParamMap[] paramGrid = new ParamGridBuilder()
-                .addGrid(verser.sentencesInVerse(), new int[]{4, 8, 16})
+                .addGrid(word2Vec.stepSize(), new double[]{0.25, 0.5, 0.75, 0.9})
+                .addGrid(verser.sentencesInVerse(), new int[]{4, 8, 12, 16})
                 .addGrid(word2Vec.vectorSize(), new int[] {100, 200, 300})
-                .addGrid(logisticRegression.regParam(), new double[] {0.01D})
+                .addGrid(logisticRegression.regParam(), new double[] {0.1D, 0.01D, 0.001D, 0.0001D})
                 .addGrid(logisticRegression.maxIter(), new int[] {100, 200})
                 .build();
 
-        Dataset<Row>[] splits = sentences.randomSplit(new double[] {0.8, 0.2}, 12345);
+        Dataset<Row>[] splits = sentences.randomSplit(new double[] {0.9, 0.1}, 12345);
         Dataset<Row> training = splits[0];
         Dataset<Row> test = splits[1];
 
-        CrossValidator crossValidator = new CrossValidator()
-                .setEstimator(pipeline)
-                .setEvaluator(new MulticlassClassificationEvaluator().setLabelCol(LABEL.getName()).setMetricName("accuracy"))
-                .setEstimatorParamMaps(paramGrid)
-                .setNumFolds(10);
 
-        CrossValidatorModel model = crossValidator.fit(training);
+        TrainValidationSplit TrainValidationSplit = new TrainValidationSplit()
+                .setEstimator(pipeline)
+                .setEstimatorParamMaps(paramGrid)
+                .setEvaluator(new MulticlassClassificationEvaluator().setLabelCol(LABEL.getName()).setMetricName("accuracy"))
+                .setTrainRatio(0.8);
+
+        TrainValidationSplitModel model = TrainValidationSplit.fit(training);
 
         saveModel(model, getModelDirectory());
 
@@ -98,7 +105,7 @@ public class LogisticRegressionPipeline extends CommonLyricsPipeline {
         return model;
     }
 
-    public Map<String, Object> getModelStatistics(CrossValidatorModel model) {
+    public Map<String, Object> getModelStatistics(TrainValidationSplitModel model) {
         Map<String, Object> modelStatistics = super.getModelStatistics(model);
 
         PipelineModel bestModel = (PipelineModel) model.bestModel();

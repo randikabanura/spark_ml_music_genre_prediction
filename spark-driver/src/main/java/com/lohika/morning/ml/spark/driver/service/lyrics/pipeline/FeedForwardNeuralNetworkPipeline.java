@@ -11,19 +11,25 @@ import org.apache.spark.ml.Transformer;
 import org.apache.spark.ml.classification.MultilayerPerceptronClassificationModel;
 import org.apache.spark.ml.classification.MultilayerPerceptronClassifier;
 import org.apache.spark.ml.evaluation.BinaryClassificationEvaluator;
+import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator;
 import org.apache.spark.ml.feature.*;
 import org.apache.spark.ml.param.ParamMap;
-import org.apache.spark.ml.tuning.CrossValidator;
-import org.apache.spark.ml.tuning.CrossValidatorModel;
+import org.apache.spark.ml.tuning.TrainValidationSplit;
+import org.apache.spark.ml.tuning.TrainValidationSplitModel;
 import org.apache.spark.ml.tuning.ParamGridBuilder;
 import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.springframework.stereotype.Component;
 
 @Component("FeedForwardNeuralNetworkPipeline")
 public class FeedForwardNeuralNetworkPipeline extends CommonLyricsPipeline {
 
-    public CrossValidatorModel classify() {
+    public TrainValidationSplitModel classify() {
         Dataset sentences = readLyrics();
+
+        StringIndexer stringIndexer = new StringIndexer()
+                .setInputCol(LABEL_STRING.getName())
+                .setOutputCol(LABEL.getName());
 
         // Remove all punctuation symbols.
         Cleanser cleanser = new Cleanser();
@@ -51,15 +57,20 @@ public class FeedForwardNeuralNetworkPipeline extends CommonLyricsPipeline {
         Verser verser = new Verser();
 
         // Create model.
-        Word2Vec word2Vec = new Word2Vec().setInputCol(Column.VERSE.getName()).setOutputCol("features").setMinCount(0);
+        Word2Vec word2Vec = new Word2Vec()
+                .setInputCol(Column.VERSE.getName())
+                .setOutputCol("features")
+                .setMinCount(0);
 
         MultilayerPerceptronClassifier multilayerPerceptronClassifier = new MultilayerPerceptronClassifier()
+                .setLabelCol(LABEL.getName())
                 .setBlockSize(300)
                 .setSeed(1234L)
                 .setLayers(new int[]{300, 50, 2});
 
         Pipeline pipeline = new Pipeline().setStages(
                 new PipelineStage[]{
+                        stringIndexer,
                         cleanser,
                         numerator,
                         tokenizer,
@@ -78,30 +89,39 @@ public class FeedForwardNeuralNetworkPipeline extends CommonLyricsPipeline {
                 .addGrid(multilayerPerceptronClassifier.maxIter(), new int[] {100})
                 .build();
 
-        CrossValidator crossValidator = new CrossValidator()
+        Dataset<Row>[] splits = sentences.randomSplit(new double[] {0.8, 0.2}, 12345);
+        Dataset<Row> training = splits[0];
+        Dataset<Row> test = splits[1];
+
+        TrainValidationSplit TrainValidationSplit = new TrainValidationSplit()
                 .setEstimator(pipeline)
-                .setEvaluator(new BinaryClassificationEvaluator().setRawPredictionCol("prediction"))
+                .setEvaluator(new MulticlassClassificationEvaluator().setLabelCol(LABEL.getName()).setMetricName("accuracy"))
                 .setEstimatorParamMaps(paramGrid)
-                .setNumFolds(10);
+                .setTrainRatio(0.8);
+                
 
         // Run cross-validation, and choose the best set of parameters.
-        CrossValidatorModel model = crossValidator.fit(sentences);
+        TrainValidationSplitModel model = TrainValidationSplit.fit(training);
 
         saveModel(model, getModelDirectory());
+
+        model.transform(test)
+                .select("features", LABEL.getName(), "prediction")
+                .show();
 
         return model;
     }
 
-    public Map<String, Object> getModelStatistics(CrossValidatorModel model) {
+    public Map<String, Object> getModelStatistics(TrainValidationSplitModel model) {
         Map<String, Object> modelStatistics = super.getModelStatistics(model);
 
         PipelineModel bestModel = (PipelineModel) model.bestModel();
         Transformer[] stages = bestModel.stages();
 
-        modelStatistics.put("Sentences in verse", ((Verser) stages[7]).getSentencesInVerse());
-        modelStatistics.put("Word2Vec vocabulary", ((Word2VecModel) stages[8]).getVectors().count());
-        modelStatistics.put("Vector size", ((Word2VecModel) stages[8]).getVectorSize());
-        modelStatistics.put("Weights", ((MultilayerPerceptronClassificationModel) stages[9]).weights());
+        modelStatistics.put("Sentences in verse", ((Verser) stages[8]).getSentencesInVerse());
+        modelStatistics.put("Word2Vec vocabulary", ((Word2VecModel) stages[9]).getVectors().count());
+        modelStatistics.put("Vector size", ((Word2VecModel) stages[9]).getVectorSize());
+        modelStatistics.put("Weights", ((MultilayerPerceptronClassificationModel) stages[10]).weights());
         printModelStatistics(modelStatistics);
 
         return modelStatistics;

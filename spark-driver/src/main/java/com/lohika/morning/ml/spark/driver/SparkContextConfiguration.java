@@ -28,6 +28,8 @@ public class SparkContextConfiguration {
                 .set("spark.kryoserializer.buffer.max", kryoserializerBufferMax)
                 .set("spark.kryo.registrationRequired", "false")
                 .set("spark.sql.shuffle.partitions", sqlShufflePartitions)
+                .set("spark.network.timeout", networkTimeout)
+                .set("spark.executor.heartbeatInterval", executorHeartbeatInterval)
                 .set("spark.default.parallelism", defaultParallelism);
 
         SparkContext sparkContext = new SparkContext(sparkConf);
@@ -46,6 +48,12 @@ public class SparkContextConfiguration {
 
     @Value("${spark.cores.max}")
     private String coresMax;
+
+    @Value("${spark.network.timeout}")
+    private String networkTimeout;
+
+    @Value("${spark.executor.heartbeatInterval}")
+    private String executorHeartbeatInterval;
 
     @Value("${spark.driver.memory}")
     private String driverMemory;

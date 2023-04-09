@@ -7,7 +7,7 @@ import org.apache.spark.ml.clustering.KMeansModel;
 import org.apache.spark.ml.regression.LinearRegression;
 import org.apache.spark.ml.regression.LinearRegressionModel;
 import org.apache.spark.ml.regression.LinearRegressionTrainingSummary;
-import org.apache.spark.ml.tuning.CrossValidatorModel;
+import org.apache.spark.ml.tuning.TrainValidationSplitModel;
 import org.apache.spark.ml.util.MLWritable;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -93,8 +93,8 @@ public class MLService {
         }
     }
 
-    public CrossValidatorModel loadCrossValidationModel(String modelDirectory) {
-        CrossValidatorModel model = CrossValidatorModel.load(modelDirectory);
+    public TrainValidationSplitModel loadCrossValidationModel(String modelDirectory) {
+        TrainValidationSplitModel model = TrainValidationSplitModel.load(modelDirectory);
 
         System.out.println("\n------------------------------------------------");
         System.out.println("Loaded cross validation model from " + modelDirectory);
