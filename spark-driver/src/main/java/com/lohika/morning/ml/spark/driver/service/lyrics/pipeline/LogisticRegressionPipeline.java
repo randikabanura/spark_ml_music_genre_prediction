@@ -90,7 +90,7 @@ public class LogisticRegressionPipeline extends CommonLyricsPipeline {
         CrossValidator crossValidator = new CrossValidator()
                 .setEstimator(pipeline)
                 .setEstimatorParamMaps(paramGrid)
-                .setNumFolds(8)
+                .setNumFolds(3)
                 .setEvaluator(new MulticlassClassificationEvaluator()
                         .setLabelCol(LABEL.getName()).setMetricName("accuracy"));
 
