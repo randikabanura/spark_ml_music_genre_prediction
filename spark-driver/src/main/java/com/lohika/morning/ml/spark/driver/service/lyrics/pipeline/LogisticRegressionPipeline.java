@@ -60,7 +60,6 @@ public class LogisticRegressionPipeline extends CommonLyricsPipeline {
                                     .setMinCount(0);
 
         LogisticRegression logisticRegression = new LogisticRegression()
-                .setElasticNetParam(1D)
                 .setLabelCol(LABEL.getName());
 
         Pipeline pipeline = new Pipeline().setStages(
@@ -78,25 +77,24 @@ public class LogisticRegressionPipeline extends CommonLyricsPipeline {
                         logisticRegression});
 
         ParamMap[] paramGrid = new ParamGridBuilder()
-                .addGrid(word2Vec.stepSize(), new double[]{0.75, 0.9})
-                .addGrid(verser.sentencesInVerse(), new int[]{4, 8, 12, 16})
+                .addGrid(verser.sentencesInVerse(), new int[]{4, 8, 16})
                 .addGrid(word2Vec.vectorSize(), new int[] {100, 200, 300})
-                .addGrid(logisticRegression.regParam(), new double[] {0.1D})
+                .addGrid(logisticRegression.regParam(), new double[] {0.01D})
                 .addGrid(logisticRegression.maxIter(), new int[] {100, 200})
                 .build();
 
-        Dataset<Row>[] splits = sentences.randomSplit(new double[] {0.9, 0.1}, 12345);
+        Dataset<Row>[] splits = sentences.randomSplit(new double[] {0.8, 0.2}, 3123);
         Dataset<Row> training = splits[0];
         Dataset<Row> test = splits[1];
 
-
-        CrossValidator CrossValidator = new CrossValidator()
+        CrossValidator crossValidator = new CrossValidator()
                 .setEstimator(pipeline)
                 .setEstimatorParamMaps(paramGrid)
+                .setNumFolds(8)
                 .setEvaluator(new MulticlassClassificationEvaluator()
                         .setLabelCol(LABEL.getName()).setMetricName("accuracy"));
 
-        CrossValidatorModel model = CrossValidator.fit(training);
+        CrossValidatorModel model = crossValidator.fit(training);
 
         saveModel(model, getModelDirectory());
 

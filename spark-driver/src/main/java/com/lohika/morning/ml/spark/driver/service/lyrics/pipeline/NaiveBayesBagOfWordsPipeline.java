@@ -82,14 +82,14 @@ public class NaiveBayesBagOfWordsPipeline extends CommonLyricsPipeline {
         Dataset<Row> training = splits[0];
         Dataset<Row> test = splits[1];
 
-        CrossValidator CrossValidator = new CrossValidator()
+        CrossValidator crossValidator = new CrossValidator()
                 .setEstimator(pipeline)
                 .setEvaluator(new MulticlassClassificationEvaluator().setLabelCol(LABEL.getName()).setMetricName("accuracy"))
                 .setEstimatorParamMaps(paramGrid);
                 
 
         // Run cross-validation, and choose the best set of parameters.
-        CrossValidatorModel model = CrossValidator.fit(training);
+        CrossValidatorModel model = crossValidator.fit(training);
         saveModel(model, getModelDirectory());
 
         model.transform(test)

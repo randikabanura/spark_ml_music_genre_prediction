@@ -129,8 +129,8 @@ public abstract class CommonLyricsPipeline implements LyricsPipeline {
     public Map<String, Object> getModelStatistics(CrossValidatorModel model) {
         Map<String, Object> modelStatistics = new HashMap<>();
 
-       /* Arrays.sort(model.);
-        modelStatistics.put("Best model metrics", model.avgMetrics()[model.avgMetrics().length - 1]);*/
+        Arrays.sort(model.avgMetrics());
+        modelStatistics.put("Best model metrics", model.avgMetrics()[model.avgMetrics().length - 1]);
 
         return modelStatistics;
     }
@@ -140,10 +140,6 @@ public abstract class CommonLyricsPipeline implements LyricsPipeline {
         System.out.println("Model statistics:");
         System.out.println(modelStatistics);
         System.out.println("------------------------------------------------\n");
-    }
-
-    void saveModel(TrainValidationSplit model, String modelOutputDirectory) {
-        this.mlService.saveModel(model, modelOutputDirectory);
     }
 
     void saveModel(CrossValidatorModel model, String modelOutputDirectory) {
