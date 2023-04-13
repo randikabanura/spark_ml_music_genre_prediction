@@ -28,7 +28,7 @@ public class LyricsService {
     }
 
     public Map<String, Object> getModelStatistics() {
-        CrossValidatorModel model = mlService.loadCrossValidationModel(lyricsModelDirectoryPath + "/naive-bayes/");
+        CrossValidatorModel model = mlService.loadCrossValidationModel(lyricsModelDirectoryPath + "/logistic-regression/");
         return pipeline.getModelStatistics(model);
     }
 
