@@ -5,7 +5,7 @@ import com.lohika.morning.ml.spark.driver.service.lyrics.GenrePrediction;
 import com.lohika.morning.ml.spark.driver.service.lyrics.pipeline.LyricsPipeline;
 import java.util.Map;
 import javax.annotation.Resource;
-import org.apache.spark.ml.tuning.TrainValidationSplitModel;
+import org.apache.spark.ml.tuning.CrossValidatorModel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -23,12 +23,12 @@ public class LyricsService {
     private MLService mlService;
 
     public Map<String, Object> classifyLyrics() {
-        TrainValidationSplitModel model = pipeline.classify();
+        CrossValidatorModel model = pipeline.classify();
         return pipeline.getModelStatistics(model);
     }
 
     public Map<String, Object> getModelStatistics() {
-        TrainValidationSplitModel model = mlService.loadCrossValidationModel(lyricsModelDirectoryPath + "/naive-bayes/");
+        CrossValidatorModel model = mlService.loadCrossValidationModel(lyricsModelDirectoryPath + "/naive-bayes/");
         return pipeline.getModelStatistics(model);
     }
 

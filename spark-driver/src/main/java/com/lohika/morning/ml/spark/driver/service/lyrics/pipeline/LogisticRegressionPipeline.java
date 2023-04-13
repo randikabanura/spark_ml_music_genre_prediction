@@ -1,6 +1,8 @@
 package com.lohika.morning.ml.spark.driver.service.lyrics.pipeline;
 
 import static com.lohika.morning.ml.spark.distributed.library.function.map.lyrics.Column.*;
+import static org.apache.spark.sql.functions.rand;
+
 import com.lohika.morning.ml.spark.driver.service.lyrics.transformer.*;
 import java.util.Map;
 import org.apache.spark.ml.Pipeline;
@@ -13,12 +15,11 @@ import org.apache.spark.ml.classification.OneVsRest;
 import org.apache.spark.ml.evaluation.BinaryClassificationEvaluator;
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator;
 import org.apache.spark.ml.feature.*;
+import org.apache.spark.ml.tuning.*;
+import org.apache.spark.sql.functions.*;
 import org.apache.spark.ml.param.ParamMap;
 import org.apache.spark.ml.param.ParamPair;
-import org.apache.spark.ml.tuning.TrainValidationSplit;
-import org.apache.spark.ml.tuning.TrainValidationSplitModel;
-import org.apache.spark.ml.tuning.ParamGridBuilder;
-import org.apache.spark.ml.tuning.TrainValidationSplitModel;
+import org.apache.spark.ml.tuning.CrossValidatorModel;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.springframework.stereotype.Component;
@@ -26,8 +27,9 @@ import org.springframework.stereotype.Component;
 @Component("LogisticRegressionPipeline")
 public class LogisticRegressionPipeline extends CommonLyricsPipeline {
 
-    public TrainValidationSplitModel classify() {
+    public CrossValidatorModel classify() {
         Dataset<Row> sentences = readLyrics();
+        sentences = sentences.orderBy(rand());
 
         StringIndexer stringIndexer = new StringIndexer()
                 .setInputCol(LABEL_STRING.getName())
@@ -76,10 +78,10 @@ public class LogisticRegressionPipeline extends CommonLyricsPipeline {
                         logisticRegression});
 
         ParamMap[] paramGrid = new ParamGridBuilder()
-                .addGrid(word2Vec.stepSize(), new double[]{0.25, 0.5, 0.75, 0.9})
+                .addGrid(word2Vec.stepSize(), new double[]{0.75, 0.9})
                 .addGrid(verser.sentencesInVerse(), new int[]{4, 8, 12, 16})
                 .addGrid(word2Vec.vectorSize(), new int[] {100, 200, 300})
-                .addGrid(logisticRegression.regParam(), new double[] {0.1D, 0.01D, 0.001D, 0.0001D})
+                .addGrid(logisticRegression.regParam(), new double[] {0.1D})
                 .addGrid(logisticRegression.maxIter(), new int[] {100, 200})
                 .build();
 
@@ -88,13 +90,13 @@ public class LogisticRegressionPipeline extends CommonLyricsPipeline {
         Dataset<Row> test = splits[1];
 
 
-        TrainValidationSplit TrainValidationSplit = new TrainValidationSplit()
+        CrossValidator CrossValidator = new CrossValidator()
                 .setEstimator(pipeline)
                 .setEstimatorParamMaps(paramGrid)
-                .setEvaluator(new MulticlassClassificationEvaluator().setLabelCol(LABEL.getName()).setMetricName("accuracy"))
-                .setTrainRatio(0.8);
+                .setEvaluator(new MulticlassClassificationEvaluator()
+                        .setLabelCol(LABEL.getName()).setMetricName("accuracy"));
 
-        TrainValidationSplitModel model = TrainValidationSplit.fit(training);
+        CrossValidatorModel model = CrossValidator.fit(training);
 
         saveModel(model, getModelDirectory());
 
@@ -105,7 +107,7 @@ public class LogisticRegressionPipeline extends CommonLyricsPipeline {
         return model;
     }
 
-    public Map<String, Object> getModelStatistics(TrainValidationSplitModel model) {
+    public Map<String, Object> getModelStatistics(CrossValidatorModel model) {
         Map<String, Object> modelStatistics = super.getModelStatistics(model);
 
         PipelineModel bestModel = (PipelineModel) model.bestModel();

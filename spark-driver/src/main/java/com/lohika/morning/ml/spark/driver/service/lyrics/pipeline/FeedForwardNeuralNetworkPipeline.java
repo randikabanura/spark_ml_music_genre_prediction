@@ -2,6 +2,8 @@ package com.lohika.morning.ml.spark.driver.service.lyrics.pipeline;
 
 import com.lohika.morning.ml.spark.distributed.library.function.map.lyrics.Column;
 import static com.lohika.morning.ml.spark.distributed.library.function.map.lyrics.Column.*;
+import static org.apache.spark.sql.functions.rand;
+
 import com.lohika.morning.ml.spark.driver.service.lyrics.transformer.*;
 import java.util.Map;
 import org.apache.spark.ml.Pipeline;
@@ -14,8 +16,8 @@ import org.apache.spark.ml.evaluation.BinaryClassificationEvaluator;
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator;
 import org.apache.spark.ml.feature.*;
 import org.apache.spark.ml.param.ParamMap;
-import org.apache.spark.ml.tuning.TrainValidationSplit;
-import org.apache.spark.ml.tuning.TrainValidationSplitModel;
+import org.apache.spark.ml.tuning.CrossValidator;
+import org.apache.spark.ml.tuning.CrossValidatorModel;
 import org.apache.spark.ml.tuning.ParamGridBuilder;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -24,8 +26,9 @@ import org.springframework.stereotype.Component;
 @Component("FeedForwardNeuralNetworkPipeline")
 public class FeedForwardNeuralNetworkPipeline extends CommonLyricsPipeline {
 
-    public TrainValidationSplitModel classify() {
-        Dataset sentences = readLyrics();
+    public CrossValidatorModel classify() {
+        Dataset<Row> sentences = readLyrics();
+        sentences = sentences.orderBy(rand());
 
         StringIndexer stringIndexer = new StringIndexer()
                 .setInputCol(LABEL_STRING.getName())
@@ -66,7 +69,7 @@ public class FeedForwardNeuralNetworkPipeline extends CommonLyricsPipeline {
                 .setLabelCol(LABEL.getName())
                 .setBlockSize(300)
                 .setSeed(1234L)
-                .setLayers(new int[]{300, 50, 2});
+                .setLayers(new int[]{300, 175, 70, 7});
 
         Pipeline pipeline = new Pipeline().setStages(
                 new PipelineStage[]{
@@ -93,15 +96,15 @@ public class FeedForwardNeuralNetworkPipeline extends CommonLyricsPipeline {
         Dataset<Row> training = splits[0];
         Dataset<Row> test = splits[1];
 
-        TrainValidationSplit TrainValidationSplit = new TrainValidationSplit()
+        CrossValidator CrossValidator = new CrossValidator()
                 .setEstimator(pipeline)
                 .setEvaluator(new MulticlassClassificationEvaluator().setLabelCol(LABEL.getName()).setMetricName("accuracy"))
                 .setEstimatorParamMaps(paramGrid)
-                .setTrainRatio(0.8);
+                ;
                 
 
         // Run cross-validation, and choose the best set of parameters.
-        TrainValidationSplitModel model = TrainValidationSplit.fit(training);
+        CrossValidatorModel model = CrossValidator.fit(training);
 
         saveModel(model, getModelDirectory());
 
@@ -112,7 +115,7 @@ public class FeedForwardNeuralNetworkPipeline extends CommonLyricsPipeline {
         return model;
     }
 
-    public Map<String, Object> getModelStatistics(TrainValidationSplitModel model) {
+    public Map<String, Object> getModelStatistics(CrossValidatorModel model) {
         Map<String, Object> modelStatistics = super.getModelStatistics(model);
 
         PipelineModel bestModel = (PipelineModel) model.bestModel();

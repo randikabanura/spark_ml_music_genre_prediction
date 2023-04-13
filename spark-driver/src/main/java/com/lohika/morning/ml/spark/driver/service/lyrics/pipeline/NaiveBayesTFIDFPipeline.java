@@ -12,8 +12,8 @@ import org.apache.spark.ml.evaluation.BinaryClassificationEvaluator;
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator;
 import org.apache.spark.ml.feature.*;
 import org.apache.spark.ml.param.ParamMap;
-import org.apache.spark.ml.tuning.TrainValidationSplit;
-import org.apache.spark.ml.tuning.TrainValidationSplitModel;
+import org.apache.spark.ml.tuning.CrossValidator;
+import org.apache.spark.ml.tuning.CrossValidatorModel;
 import org.apache.spark.ml.tuning.ParamGridBuilder;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -22,7 +22,7 @@ import org.springframework.stereotype.Component;
 @Component("NaiveBayesTFIDFPipeline")
 public class NaiveBayesTFIDFPipeline extends CommonLyricsPipeline {
 
-    public TrainValidationSplitModel classify() {
+    public CrossValidatorModel classify() {
         Dataset sentences = readLyrics();
 
         StringIndexer stringIndexer = new StringIndexer()
@@ -89,14 +89,14 @@ public class NaiveBayesTFIDFPipeline extends CommonLyricsPipeline {
         Dataset<Row> training = splits[0];
         Dataset<Row> test = splits[1];
 
-        TrainValidationSplit TrainValidationSplit = new TrainValidationSplit()
+        CrossValidator CrossValidator = new CrossValidator()
                 .setEstimator(pipeline)
                 .setEvaluator(new MulticlassClassificationEvaluator().setLabelCol(LABEL.getName()).setMetricName("accuracy"))
-                .setEstimatorParamMaps(paramGrid).setTrainRatio(0.8);
+                .setEstimatorParamMaps(paramGrid);
                 
 
         // Run cross-validation, and choose the best set of parameters.
-        TrainValidationSplitModel model = TrainValidationSplit.fit(training);
+        CrossValidatorModel model = CrossValidator.fit(training);
 
         saveModel(model, getModelDirectory());
 
@@ -107,7 +107,7 @@ public class NaiveBayesTFIDFPipeline extends CommonLyricsPipeline {
         return model;
     }
 
-    public Map<String, Object> getModelStatistics(TrainValidationSplitModel model) {
+    public Map<String, Object> getModelStatistics(CrossValidatorModel model) {
         Map<String, Object> modelStatistics = super.getModelStatistics(model);
 
         PipelineModel bestModel = (PipelineModel) model.bestModel();

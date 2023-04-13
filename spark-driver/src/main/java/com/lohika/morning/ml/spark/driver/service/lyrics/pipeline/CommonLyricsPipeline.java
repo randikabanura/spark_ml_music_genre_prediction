@@ -16,9 +16,10 @@ import java.util.Map;
 import org.apache.spark.ml.PipelineModel;
 import org.apache.spark.ml.feature.StringIndexer;
 import org.apache.spark.ml.linalg.DenseVector;
+import org.apache.spark.ml.tuning.*;
 import org.apache.spark.ml.tuning.CrossValidatorModel;
-import org.apache.spark.ml.tuning.TrainValidationSplitModel;
-import org.apache.spark.ml.tuning.TrainValidationSplitModel;
+import org.apache.spark.ml.tuning.CrossValidatorModel;
+import org.apache.spark.ml.tuning.CrossValidatorModel;
 import org.apache.spark.sql.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -49,7 +50,7 @@ public abstract class CommonLyricsPipeline implements LyricsPipeline {
 
         unknownLyricsDataset = unknownLyricsDataset.withColumnRenamed("value", VALUE.getName());
 
-        TrainValidationSplitModel model = mlService.loadCrossValidationModel(getModelDirectory());
+        CrossValidatorModel model = mlService.loadCrossValidationModel(getModelDirectory());
         getModelStatistics(model);
 
         PipelineModel bestModel = (PipelineModel) model.bestModel();
@@ -125,7 +126,7 @@ public abstract class CommonLyricsPipeline implements LyricsPipeline {
     }
 
     @Override
-    public Map<String, Object> getModelStatistics(TrainValidationSplitModel model) {
+    public Map<String, Object> getModelStatistics(CrossValidatorModel model) {
         Map<String, Object> modelStatistics = new HashMap<>();
 
        /* Arrays.sort(model.);
@@ -141,11 +142,11 @@ public abstract class CommonLyricsPipeline implements LyricsPipeline {
         System.out.println("------------------------------------------------\n");
     }
 
-    void saveModel(CrossValidatorModel model, String modelOutputDirectory) {
+    void saveModel(TrainValidationSplit model, String modelOutputDirectory) {
         this.mlService.saveModel(model, modelOutputDirectory);
     }
 
-    void saveModel(TrainValidationSplitModel model, String modelOutputDirectory) {
+    void saveModel(CrossValidatorModel model, String modelOutputDirectory) {
         this.mlService.saveModel(model, modelOutputDirectory);
     }
 
