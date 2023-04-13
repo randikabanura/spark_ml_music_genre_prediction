@@ -1,14 +1,11 @@
 package com.lohika.morning.ml.spark.driver.service.lyrics.pipeline;
 
 import static com.lohika.morning.ml.spark.distributed.library.function.map.lyrics.Column.*;
-import static org.apache.spark.sql.functions.*;
 
-import com.lohika.morning.ml.spark.distributed.library.function.map.lyrics.Column;
 import com.lohika.morning.ml.spark.driver.service.MLService;
 import com.lohika.morning.ml.spark.driver.service.lyrics.Genre;
 import com.lohika.morning.ml.spark.driver.service.lyrics.GenrePrediction;
 
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -16,9 +13,6 @@ import java.util.Map;
 import org.apache.spark.ml.PipelineModel;
 import org.apache.spark.ml.feature.StringIndexer;
 import org.apache.spark.ml.linalg.DenseVector;
-import org.apache.spark.ml.tuning.*;
-import org.apache.spark.ml.tuning.CrossValidatorModel;
-import org.apache.spark.ml.tuning.CrossValidatorModel;
 import org.apache.spark.ml.tuning.CrossValidatorModel;
 import org.apache.spark.sql.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -82,7 +76,7 @@ public abstract class CommonLyricsPipeline implements LyricsPipeline {
     }
 
     Dataset<Row> readLyrics() {
-        Dataset input = readLyricsForGenre(lyricsTrainingSetDirectoryPath, Genre.POP)
+        Dataset<Row> input = readLyricsForGenre(lyricsTrainingSetDirectoryPath, Genre.POP)
                 .union(readLyricsForGenre(lyricsTrainingSetDirectoryPath, Genre.COUNTRY))
                 .union(readLyricsForGenre(lyricsTrainingSetDirectoryPath, Genre.BLUES))
                 .union(readLyricsForGenre(lyricsTrainingSetDirectoryPath, Genre.ROCK))
@@ -91,6 +85,10 @@ public abstract class CommonLyricsPipeline implements LyricsPipeline {
                 .union(readLyricsForGenre(lyricsTrainingSetDirectoryPath, Genre.HIPHOP));
         input = input.withColumnRenamed(input.columns()[0], ID.getName());
         input = input.withColumnRenamed(LABEL.getName(), LABEL_STRING.getName());
+        StringIndexer stringIndexer = new StringIndexer()
+                .setInputCol(LABEL_STRING.getName())
+                .setOutputCol(LABEL.getName());
+        input = stringIndexer.fit(input).transform(input);
         // Reduce the input amount of partition minimal amount (spark.default.parallelism OR 2, whatever is less)
         input = input.coalesce(sparkSession.sparkContext().defaultMinPartitions()).cache();
         // Force caching.
