@@ -71,9 +71,9 @@ public abstract class CommonLyricsPipeline implements LyricsPipeline {
                     probability.apply(Genre.POP.getValue().intValue()),
                     probability.apply(Genre.COUNTRY.getValue().intValue()),
                     probability.apply(Genre.BLUES.getValue().intValue()),
+                    probability.apply(Genre.ROCK.getValue().intValue()),
                     probability.apply(Genre.JAZZ.getValue().intValue()),
                     probability.apply(Genre.REGGAE.getValue().intValue()),
-                    probability.apply(Genre.ROCK.getValue().intValue()),
                     probability.apply(Genre.HIPHOP.getValue().intValue()));
         }
 
@@ -85,9 +85,9 @@ public abstract class CommonLyricsPipeline implements LyricsPipeline {
         Dataset input = readLyricsForGenre(lyricsTrainingSetDirectoryPath, Genre.POP)
                 .union(readLyricsForGenre(lyricsTrainingSetDirectoryPath, Genre.COUNTRY))
                 .union(readLyricsForGenre(lyricsTrainingSetDirectoryPath, Genre.BLUES))
+                .union(readLyricsForGenre(lyricsTrainingSetDirectoryPath, Genre.ROCK))
                 .union(readLyricsForGenre(lyricsTrainingSetDirectoryPath, Genre.JAZZ))
                 .union(readLyricsForGenre(lyricsTrainingSetDirectoryPath, Genre.REGGAE))
-                .union(readLyricsForGenre(lyricsTrainingSetDirectoryPath, Genre.ROCK))
                 .union(readLyricsForGenre(lyricsTrainingSetDirectoryPath, Genre.HIPHOP));
         input = input.withColumnRenamed(input.columns()[0], ID.getName());
         input = input.withColumnRenamed(LABEL.getName(), LABEL_STRING.getName());

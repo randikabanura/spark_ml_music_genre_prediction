@@ -12,7 +12,7 @@ public class GenrePrediction {
     private Double rockProbability;
     private Double hiphopProbability;
 
-    public GenrePrediction(String genre, Double popProbability, Double countryProbability, Double bluesProbability, Double jazzProbability, Double reggaeProbability, Double rockProbability, Double hiphopProbability) {
+    public GenrePrediction(String genre, Double popProbability, Double countryProbability, Double bluesProbability, Double rockProbability, Double jazzProbability, Double reggaeProbability, Double hiphopProbability) {
         this.genre = genre;
         this.popProbability = popProbability;
         this.countryProbability = countryProbability;
