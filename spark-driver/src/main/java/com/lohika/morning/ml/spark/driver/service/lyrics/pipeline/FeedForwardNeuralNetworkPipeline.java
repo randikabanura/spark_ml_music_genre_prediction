@@ -28,7 +28,6 @@ public class FeedForwardNeuralNetworkPipeline extends CommonLyricsPipeline {
 
     public CrossValidatorModel classify() {
         Dataset<Row> sentences = readLyrics();
-        sentences = sentences.orderBy(rand());
 
         StringIndexer stringIndexer = new StringIndexer()
                 .setInputCol(LABEL_STRING.getName())

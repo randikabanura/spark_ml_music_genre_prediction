@@ -3,13 +3,13 @@ package com.lohika.morning.ml.spark.driver.service.lyrics;
 public enum Genre {
 
 
-    POP("POP", 0D),
-    COUNTRY("COUNTRY", 1D),
-    BLUES("BLUES", 2D),
-    JAZZ("JAZZ", 3D),
-    REGGAE("REGGAE", 4D),
-    ROCK("ROCK", 5D),
-    HIPHOP("HIP HOP", 6D),
+    POP("POP", 0D), // 7042 records
+    COUNTRY("COUNTRY", 1D), // 5445 records
+    BLUES("BLUES", 2D), // 4604 records
+    ROCK("ROCK", 3D), // 4034 records
+    JAZZ("JAZZ", 4D), // 3839 records
+    REGGAE("REGGAE", 5D), // 2498 records
+    HIPHOP("HIP HOP", 6D), // 904 records
 
     UNKNOWN("Don\'t know :(", -1D);
 
