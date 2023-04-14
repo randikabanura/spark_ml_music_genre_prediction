@@ -6,7 +6,7 @@ public enum Genre {
     POP("POP", 0D), // 7042 records
     COUNTRY("COUNTRY", 1D), // 5445 records
     BLUES("BLUES", 2D), // 4604 records
-    METAL("METAL", 3D), // 4200 records
+    METAL("METAL", 3D), // 4042 records
     ROCK("ROCK", 4D), // 4034 records
     JAZZ("JAZZ", 5D), // 3839 records
     REGGAE("REGGAE", 6D), // 2498 records

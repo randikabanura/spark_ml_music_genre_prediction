@@ -50,6 +50,10 @@ public class GenrePrediction {
         return bluesProbability;
     }
 
+    public Double getMetalProbability() {
+        return metalProbability;
+    }
+
     public Double getJazzProbability() {
         return jazzProbability;
     }
