@@ -29,10 +29,6 @@ public class FeedForwardNeuralNetworkPipeline extends CommonLyricsPipeline {
     public CrossValidatorModel classify() {
         Dataset<Row> sentences = readLyrics();
 
-        StringIndexer stringIndexer = new StringIndexer()
-                .setInputCol(LABEL_STRING.getName())
-                .setOutputCol(LABEL.getName());
-
         // Remove all punctuation symbols.
         Cleanser cleanser = new Cleanser();
 
@@ -72,7 +68,6 @@ public class FeedForwardNeuralNetworkPipeline extends CommonLyricsPipeline {
 
         Pipeline pipeline = new Pipeline().setStages(
                 new PipelineStage[]{
-                        stringIndexer,
                         cleanser,
                         numerator,
                         tokenizer,
@@ -120,10 +115,10 @@ public class FeedForwardNeuralNetworkPipeline extends CommonLyricsPipeline {
         PipelineModel bestModel = (PipelineModel) model.bestModel();
         Transformer[] stages = bestModel.stages();
 
-        modelStatistics.put("Sentences in verse", ((Verser) stages[8]).getSentencesInVerse());
-        modelStatistics.put("Word2Vec vocabulary", ((Word2VecModel) stages[9]).getVectors().count());
-        modelStatistics.put("Vector size", ((Word2VecModel) stages[9]).getVectorSize());
-        modelStatistics.put("Weights", ((MultilayerPerceptronClassificationModel) stages[10]).weights());
+        modelStatistics.put("Sentences in verse", ((Verser) stages[7]).getSentencesInVerse());
+        modelStatistics.put("Word2Vec vocabulary", ((Word2VecModel) stages[8]).getVectors().count());
+        modelStatistics.put("Vector size", ((Word2VecModel) stages[8]).getVectorSize());
+        modelStatistics.put("Weights", ((MultilayerPerceptronClassificationModel) stages[9]).weights());
         printModelStatistics(modelStatistics);
 
         return modelStatistics;

@@ -6,10 +6,11 @@ public enum Genre {
     POP("POP", 0D), // 7042 records
     COUNTRY("COUNTRY", 1D), // 5445 records
     BLUES("BLUES", 2D), // 4604 records
-    ROCK("ROCK", 3D), // 4034 records
-    JAZZ("JAZZ", 4D), // 3839 records
-    REGGAE("REGGAE", 5D), // 2498 records
-    HIPHOP("HIP HOP", 6D), // 904 records
+    METAL("METAL", 3D), // 4200 records
+    ROCK("ROCK", 4D), // 4034 records
+    JAZZ("JAZZ", 5D), // 3839 records
+    REGGAE("REGGAE", 6D), // 2498 records
+    HIPHOP("HIP HOP", 7D), // 904 records
 
     UNKNOWN("Don\'t know :(", -1D);
 

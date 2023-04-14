@@ -26,10 +26,6 @@ public class RandomForestPipeline extends CommonLyricsPipeline {
     public CrossValidatorModel classify() {
         Dataset<Row> sentences = readLyrics();
 
-        StringIndexer stringIndexer = new StringIndexer()
-                .setInputCol(LABEL_STRING.getName())
-                .setOutputCol(LABEL.getName());
-
         // Remove all punctuation symbols.
         Cleanser cleanser = new Cleanser();
 
@@ -62,7 +58,6 @@ public class RandomForestPipeline extends CommonLyricsPipeline {
 
         Pipeline pipeline = new Pipeline().setStages(
                 new PipelineStage[]{
-                        stringIndexer,
                         cleanser,
                         numerator,
                         tokenizer,
@@ -91,7 +86,6 @@ public class RandomForestPipeline extends CommonLyricsPipeline {
                 .setEstimator(pipeline)
                 .setEvaluator(new MulticlassClassificationEvaluator().setLabelCol(LABEL.getName()).setMetricName("accuracy"))
                 .setEstimatorParamMaps(paramGrid);
-                
 
         // Run cross-validation, and choose the best set of parameters.
         CrossValidatorModel model = crossValidator.fit(training);
@@ -111,12 +105,12 @@ public class RandomForestPipeline extends CommonLyricsPipeline {
         PipelineModel bestModel = (PipelineModel) model.bestModel();
         Transformer[] stages = bestModel.stages();
 
-        modelStatistics.put("Sentences in verse", ((Verser) stages[8]).getSentencesInVerse());
-        modelStatistics.put("Word2Vec vocabulary", ((Word2VecModel) stages[9]).getVectors().count());
-        modelStatistics.put("Vector size", ((Word2VecModel) stages[9]).getVectorSize());
-        modelStatistics.put("Num trees", ((RandomForestClassificationModel) stages[10]).getNumTrees());
-        modelStatistics.put("Max bins", ((RandomForestClassificationModel) stages[10]).getMaxBins());
-        modelStatistics.put("Max depth", ((RandomForestClassificationModel) stages[10]).getMaxDepth());
+        modelStatistics.put("Sentences in verse", ((Verser) stages[7]).getSentencesInVerse());
+        modelStatistics.put("Word2Vec vocabulary", ((Word2VecModel) stages[8]).getVectors().count());
+        modelStatistics.put("Vector size", ((Word2VecModel) stages[8]).getVectorSize());
+        modelStatistics.put("Num trees", ((RandomForestClassificationModel) stages[9]).getNumTrees());
+        modelStatistics.put("Max bins", ((RandomForestClassificationModel) stages[9]).getMaxBins());
+        modelStatistics.put("Max depth", ((RandomForestClassificationModel) stages[9]).getMaxDepth());
 
         printModelStatistics(modelStatistics);
 

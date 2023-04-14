@@ -65,6 +65,7 @@ public abstract class CommonLyricsPipeline implements LyricsPipeline {
                     probability.apply(Genre.POP.getValue().intValue()),
                     probability.apply(Genre.COUNTRY.getValue().intValue()),
                     probability.apply(Genre.BLUES.getValue().intValue()),
+                    probability.apply(Genre.METAL.getValue().intValue()),
                     probability.apply(Genre.ROCK.getValue().intValue()),
                     probability.apply(Genre.JAZZ.getValue().intValue()),
                     probability.apply(Genre.REGGAE.getValue().intValue()),
@@ -79,6 +80,7 @@ public abstract class CommonLyricsPipeline implements LyricsPipeline {
         Dataset<Row> input = readLyricsForGenre(lyricsTrainingSetDirectoryPath, Genre.POP)
                 .union(readLyricsForGenre(lyricsTrainingSetDirectoryPath, Genre.COUNTRY))
                 .union(readLyricsForGenre(lyricsTrainingSetDirectoryPath, Genre.BLUES))
+                .union(readLyricsForGenre(lyricsTrainingSetDirectoryPath, Genre.METAL))
                 .union(readLyricsForGenre(lyricsTrainingSetDirectoryPath, Genre.ROCK))
                 .union(readLyricsForGenre(lyricsTrainingSetDirectoryPath, Genre.JAZZ))
                 .union(readLyricsForGenre(lyricsTrainingSetDirectoryPath, Genre.REGGAE))

@@ -26,10 +26,6 @@ public class NaiveBayesBagOfWordsPipeline extends CommonLyricsPipeline {
     public CrossValidatorModel classify() {
         Dataset<Row> sentences = readLyrics();
 
-        StringIndexer stringIndexer = new StringIndexer()
-                .setInputCol(LABEL_STRING.getName())
-                .setOutputCol(LABEL.getName());
-
         // Remove all punctuation symbols.
         Cleanser cleanser = new Cleanser();
 
@@ -61,7 +57,6 @@ public class NaiveBayesBagOfWordsPipeline extends CommonLyricsPipeline {
 
         Pipeline pipeline = new Pipeline().setStages(
                 new PipelineStage[]{
-                        stringIndexer,
                         cleanser,
                         numerator,
                         tokenizer,
@@ -105,8 +100,8 @@ public class NaiveBayesBagOfWordsPipeline extends CommonLyricsPipeline {
         PipelineModel bestModel = (PipelineModel) model.bestModel();
         Transformer[] stages = bestModel.stages();
 
-        modelStatistics.put("Sentences in verse", ((Verser) stages[8]).getSentencesInVerse());
-        modelStatistics.put("Vocabulary", ((CountVectorizerModel) stages[9]).vocabulary().length);
+        modelStatistics.put("Sentences in verse", ((Verser) stages[7]).getSentencesInVerse());
+        modelStatistics.put("Vocabulary", ((CountVectorizerModel) stages[8]).vocabulary().length);
 
         printModelStatistics(modelStatistics);
 

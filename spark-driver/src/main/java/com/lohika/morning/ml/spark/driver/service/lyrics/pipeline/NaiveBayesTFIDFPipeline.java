@@ -25,10 +25,6 @@ public class NaiveBayesTFIDFPipeline extends CommonLyricsPipeline {
     public CrossValidatorModel classify() {
         Dataset sentences = readLyrics();
 
-        StringIndexer stringIndexer = new StringIndexer()
-                .setInputCol(LABEL_STRING.getName())
-                .setOutputCol(LABEL.getName());
-
         // Remove all punctuation symbols.
         Cleanser cleanser = new Cleanser();
 
@@ -65,7 +61,6 @@ public class NaiveBayesTFIDFPipeline extends CommonLyricsPipeline {
 
         Pipeline pipeline = new Pipeline().setStages(
                 new PipelineStage[]{
-                        stringIndexer,
                         cleanser,
                         numerator,
                         tokenizer,
@@ -113,9 +108,9 @@ public class NaiveBayesTFIDFPipeline extends CommonLyricsPipeline {
         PipelineModel bestModel = (PipelineModel) model.bestModel();
         Transformer[] stages = bestModel.stages();
 
-        modelStatistics.put("Sentences in verse", ((Verser) stages[8]).getSentencesInVerse());
-        modelStatistics.put("Num features", ((HashingTF) stages[9]).getNumFeatures());
-        modelStatistics.put("Min doc frequency", ((IDFModel) stages[10]).getMinDocFreq());
+        modelStatistics.put("Sentences in verse", ((Verser) stages[7]).getSentencesInVerse());
+        modelStatistics.put("Num features", ((HashingTF) stages[8]).getNumFeatures());
+        modelStatistics.put("Min doc frequency", ((IDFModel) stages[9]).getMinDocFreq());
 
         printModelStatistics(modelStatistics);
 
