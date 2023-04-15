@@ -126,7 +126,7 @@ public class FeedForwardNeuralNetworkPipeline extends CommonLyricsPipeline {
     }
 
     @Override
-    protected String getModelDirectory() {
+    public String getModelDirectory() {
         return getLyricsModelDirectoryPath() + "/feed-forward-neural-network/";
     }
 

@@ -118,7 +118,7 @@ public class LogisticRegressionPipeline extends CommonLyricsPipeline {
     }
 
     @Override
-    protected String getModelDirectory() {
+    public String getModelDirectory() {
         return getLyricsModelDirectoryPath() + "/logistic-regression/";
     }
 

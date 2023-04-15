@@ -158,7 +158,7 @@ public abstract class CommonLyricsPipeline implements LyricsPipeline {
         this.lyricsModelDirectoryPath = lyricsModelDirectoryPath;
     }
 
-    protected abstract String getModelDirectory();
+    public abstract String getModelDirectory();
 
     String getLyricsModelDirectoryPath() {
         return lyricsModelDirectoryPath;

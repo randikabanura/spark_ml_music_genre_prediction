@@ -121,7 +121,7 @@ public class RandomForestPipeline extends CommonLyricsPipeline {
     }
 
     @Override
-    protected String getModelDirectory() {
+    public String getModelDirectory() {
         return getLyricsModelDirectoryPath() + "/random-forest/";
     }
 

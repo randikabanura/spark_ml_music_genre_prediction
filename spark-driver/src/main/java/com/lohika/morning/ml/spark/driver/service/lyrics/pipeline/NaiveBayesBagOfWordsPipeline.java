@@ -112,7 +112,7 @@ public class NaiveBayesBagOfWordsPipeline extends CommonLyricsPipeline {
     }
 
     @Override
-    protected String getModelDirectory() {
+    public String getModelDirectory() {
         return getLyricsModelDirectoryPath() + "/naive-bayes/";
     }
 

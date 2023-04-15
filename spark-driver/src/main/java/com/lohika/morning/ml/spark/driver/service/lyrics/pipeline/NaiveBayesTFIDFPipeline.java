@@ -122,7 +122,7 @@ public class NaiveBayesTFIDFPipeline extends CommonLyricsPipeline {
     }
 
     @Override
-    protected String getModelDirectory() {
+    public String getModelDirectory() {
         return getLyricsModelDirectoryPath() + "/naive-bayes-tfidf/";
     }
 

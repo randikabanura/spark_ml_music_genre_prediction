@@ -12,4 +12,5 @@ public interface LyricsPipeline {
 
     Map<String, Object> getModelStatistics(CrossValidatorModel model);
 
+    String getModelDirectory();
 }
