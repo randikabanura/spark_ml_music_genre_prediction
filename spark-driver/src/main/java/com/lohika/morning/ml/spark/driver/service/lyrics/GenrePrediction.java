@@ -9,7 +9,6 @@ public class GenrePrediction {
     private Double metalProbability;
     private Double jazzProbability;
     private Double reggaeProbability;
-
     private Double rockProbability;
     private Double hiphopProbability;
 
