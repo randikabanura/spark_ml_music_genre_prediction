@@ -1,6 +1,8 @@
 package com.lohika.morning.ml.spark.driver.service.lyrics.pipeline;
 
 import static com.lohika.morning.ml.spark.distributed.library.function.map.lyrics.Column.*;
+import static org.apache.spark.sql.functions.rand;
+
 import com.lohika.morning.ml.spark.driver.service.lyrics.transformer.*;
 import java.util.Map;
 import org.apache.spark.ml.Pipeline;
@@ -25,6 +27,7 @@ public class RandomForestPipeline extends CommonLyricsPipeline {
 
     public CrossValidatorModel classify() {
         Dataset<Row> sentences = readLyrics();
+        sentences = sentences.orderBy(rand());
 
         // Remove all punctuation symbols.
         Cleanser cleanser = new Cleanser();

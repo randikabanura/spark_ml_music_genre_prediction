@@ -1,6 +1,8 @@
 package com.lohika.morning.ml.spark.driver.service.lyrics.pipeline;
 
 import static com.lohika.morning.ml.spark.distributed.library.function.map.lyrics.Column.*;
+import static org.apache.spark.sql.functions.rand;
+
 import com.lohika.morning.ml.spark.driver.service.lyrics.Genre;
 import com.lohika.morning.ml.spark.driver.service.lyrics.transformer.*;
 import com.lohika.morning.ml.spark.driver.service.lyrics.word2vec.Similarity;
@@ -33,6 +35,7 @@ public class Word2VecPipeline extends CommonLyricsPipeline {
 
     public Map<String, Object> train() {
         Dataset<Row> sentences = readLyrics();
+        sentences = sentences.orderBy(rand());
 
         Cleanser cleanser = new Cleanser();
 

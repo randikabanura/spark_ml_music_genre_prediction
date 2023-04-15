@@ -28,6 +28,7 @@ public class FeedForwardNeuralNetworkPipeline extends CommonLyricsPipeline {
 
     public CrossValidatorModel classify() {
         Dataset<Row> sentences = readLyrics();
+        sentences = sentences.orderBy(rand());
 
         // Remove all punctuation symbols.
         Cleanser cleanser = new Cleanser();
