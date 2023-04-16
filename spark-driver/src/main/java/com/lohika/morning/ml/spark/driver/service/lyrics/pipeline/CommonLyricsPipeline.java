@@ -5,9 +5,8 @@ import com.lohika.morning.ml.spark.driver.service.MLService;
 import com.lohika.morning.ml.spark.driver.service.lyrics.Genre;
 import com.lohika.morning.ml.spark.driver.service.lyrics.GenrePrediction;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+
 import org.apache.spark.ml.PipelineModel;
 import org.apache.spark.ml.linalg.DenseVector;
 import org.apache.spark.ml.tuning.CrossValidatorModel;
@@ -32,9 +31,9 @@ public abstract class CommonLyricsPipeline implements LyricsPipeline {
 
     @Override
     public GenrePrediction predict(final String unknownLyrics) {
-        String lyrics[] = unknownLyrics.split("\\r?\\n");
-        Dataset<String> lyricsDataset = sparkSession.createDataset(Arrays.asList(lyrics),
-                Encoders.STRING());
+        List<String> lyrics=new ArrayList<String>();
+        lyrics.add(unknownLyrics.replaceAll("\\r?\\n", " "));
+        Dataset<String> lyricsDataset = sparkSession.createDataset(lyrics, Encoders.STRING());
 
         Dataset<Row> unknownLyricsDataset = lyricsDataset
                 .withColumn(LABEL.getName(), functions.lit(Genre.UNKNOWN.getValue()))
