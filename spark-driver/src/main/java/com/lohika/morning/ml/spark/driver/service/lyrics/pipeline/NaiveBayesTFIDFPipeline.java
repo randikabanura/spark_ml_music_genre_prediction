@@ -83,7 +83,7 @@ public class NaiveBayesTFIDFPipeline extends CommonLyricsPipeline {
                 .addGrid(idf.minDocFreq(), new int[]{0, 1, 2})
                 .build();
 
-        Dataset<Row>[] splits = sentences.randomSplit(new double[] {0.9, 0.1}, 432432423);
+        Dataset<Row>[] splits = sentences.randomSplit(new double[] {0.8, 0.2}, 432432423);
         Dataset<Row> training = splits[0];
         Dataset<Row> test = splits[1];
 
