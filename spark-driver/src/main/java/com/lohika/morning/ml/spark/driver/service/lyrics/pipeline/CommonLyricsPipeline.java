@@ -64,7 +64,8 @@ public abstract class CommonLyricsPipeline implements LyricsPipeline {
                     probability.apply(3),
                     probability.apply(4),
                     probability.apply(5),
-                    probability.apply(6));
+                    probability.apply(6),
+                    probability.apply(7));
         }
 
         System.out.println("------------------------------------------------\n");

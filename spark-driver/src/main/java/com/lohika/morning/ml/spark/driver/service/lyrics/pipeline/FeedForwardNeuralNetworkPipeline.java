@@ -62,7 +62,6 @@ public class FeedForwardNeuralNetworkPipeline extends CommonLyricsPipeline {
                 .setMinCount(0);
 
         MultilayerPerceptronClassifier multilayerPerceptronClassifier = new MultilayerPerceptronClassifier()
-                .setLabelCol(LABEL.getName())
                 .setBlockSize(300)
                 .setSeed(1234L)
                 .setLayers(new int[]{300, 175, 70, 7});
@@ -87,25 +86,17 @@ public class FeedForwardNeuralNetworkPipeline extends CommonLyricsPipeline {
                 .addGrid(multilayerPerceptronClassifier.maxIter(), new int[] {100})
                 .build();
 
-        Dataset<Row>[] splits = sentences.randomSplit(new double[] {0.8, 0.2}, 12345);
-        Dataset<Row> training = splits[0];
-        Dataset<Row> test = splits[1];
-
         TrainValidationSplit trainSplitValidator = new TrainValidationSplit()
                 .setEstimator(pipeline)
-                .setEvaluator(new MulticlassClassificationEvaluator().setLabelCol(LABEL.getName()).setMetricName("accuracy"))
+                .setEvaluator(new MulticlassClassificationEvaluator())
                 .setEstimatorParamMaps(paramGrid)
                 ;
                 
 
         // Run cross-validation, and choose the best set of parameters.
-        TrainValidationSplitModel model = trainSplitValidator.fit(training);
+        TrainValidationSplitModel model = trainSplitValidator.fit(sentences);
 
         saveModel(model, getModelDirectory());
-
-        model.transform(test)
-                .select("features", LABEL.getName(), "prediction", "probability")
-                .show();
 
         return model;
     }

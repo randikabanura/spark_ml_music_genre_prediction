@@ -56,7 +56,7 @@ public class NaiveBayesBagOfWordsPipeline extends CommonLyricsPipeline {
 
         CountVectorizer countVectorizer = new CountVectorizer().setInputCol(VERSE.getName()).setOutputCol("features");
 
-        NaiveBayes naiveBayes = new NaiveBayes().setLabelCol(LABEL.getName());
+        NaiveBayes naiveBayes = new NaiveBayes();
 
         Pipeline pipeline = new Pipeline().setStages(
                 new PipelineStage[]{
@@ -76,23 +76,14 @@ public class NaiveBayesBagOfWordsPipeline extends CommonLyricsPipeline {
                 .addGrid(verser.sentencesInVerse(), new int[]{4, 8, 16})
                 .build();
 
-        Dataset<Row>[] splits = sentences.randomSplit(new double[] {0.8, 0.2}, 12345);
-        Dataset<Row> training = splits[0];
-        Dataset<Row> test = splits[1];
-
         TrainValidationSplit trainSplitValidator = new TrainValidationSplit()
                 .setEstimator(pipeline)
-                .setEvaluator(new MulticlassClassificationEvaluator().setLabelCol(LABEL.getName()).setMetricName("accuracy"))
+                .setEvaluator(new MulticlassClassificationEvaluator())
                 .setEstimatorParamMaps(paramGrid);
-                
 
         // Run cross-validation, and choose the best set of parameters.
-        TrainValidationSplitModel model = trainSplitValidator.fit(training);
+        TrainValidationSplitModel model = trainSplitValidator.fit(sentences);
         saveModel(model, getModelDirectory());
-
-        model.transform(test)
-                .select("features", LABEL.getName(), "prediction", "probability")
-                .show();
 
         return model;
     }

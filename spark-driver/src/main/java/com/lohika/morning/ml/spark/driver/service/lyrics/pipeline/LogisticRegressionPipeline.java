@@ -55,7 +55,7 @@ public class LogisticRegressionPipeline extends CommonLyricsPipeline {
                                     .setOutputCol("features")
                                     .setMinCount(0);
 
-        LogisticRegression logisticRegression = new LogisticRegression();
+        LogisticRegression logisticRegression = new LogisticRegression().setElasticNetParam(0.8);
 
         Pipeline pipeline = new Pipeline().setStages(
                 new PipelineStage[]{

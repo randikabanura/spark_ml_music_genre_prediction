@@ -57,7 +57,7 @@ public class RandomForestPipeline extends CommonLyricsPipeline {
         // Create model.
         Word2Vec word2Vec = new Word2Vec().setInputCol(VERSE.getName()).setOutputCol("features").setMinCount(0);
 
-        RandomForestClassifier randomForest = new RandomForestClassifier().setLabelCol(LABEL.getName());;
+        RandomForestClassifier randomForest = new RandomForestClassifier();;
 
         Pipeline pipeline = new Pipeline().setStages(
                 new PipelineStage[]{
@@ -81,23 +81,15 @@ public class RandomForestPipeline extends CommonLyricsPipeline {
                 .addGrid(randomForest.maxBins(), new int[] {32, 64, 128})
                 .build();
 
-        Dataset<Row>[] splits = sentences.randomSplit(new double[] {0.8, 0.2}, 12345);
-        Dataset<Row> training = splits[0];
-        Dataset<Row> test = splits[1];
-
         TrainValidationSplit trainSplitValidator = new TrainValidationSplit()
                 .setEstimator(pipeline)
-                .setEvaluator(new MulticlassClassificationEvaluator().setLabelCol(LABEL.getName()).setMetricName("accuracy"))
+                .setEvaluator(new MulticlassClassificationEvaluator())
                 .setEstimatorParamMaps(paramGrid);
 
         // Run cross-validation, and choose the best set of parameters.
-        TrainValidationSplitModel model = trainSplitValidator.fit(training);
+        TrainValidationSplitModel model = trainSplitValidator.fit(sentences);
 
         saveModel(model, getModelDirectory());
-
-        model.transform(test)
-                .select("features", LABEL.getName(), "prediction", "probability")
-                .show();
 
         return model;
     }

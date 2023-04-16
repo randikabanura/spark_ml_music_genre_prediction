@@ -23,7 +23,7 @@ public class GenrePrediction {
         this.hiphopProbability = hiphopProbability;
     }
 
-    public GenrePrediction(String genre, Double popProbability, Double countryProbability, Double bluesProbability, Double metalProbability, Double rockProbability, Double jazzProbability, Double reggaeProbability, Double hiphopProbability) {
+    public GenrePrediction(String genre, Double popProbability, Double countryProbability, Double bluesProbability, Double rockProbability, Double jazzProbability, Double reggaeProbability, Double hiphopProbability, Double metalProbability) {
         this.genre = genre;
         this.popProbability = popProbability;
         this.countryProbability = countryProbability;
