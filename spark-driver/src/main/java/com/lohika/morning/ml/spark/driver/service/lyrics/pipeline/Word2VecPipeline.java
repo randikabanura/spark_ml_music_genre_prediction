@@ -17,7 +17,7 @@ import org.apache.spark.ml.feature.Tokenizer;
 import org.apache.spark.ml.feature.Word2Vec;
 import org.apache.spark.ml.feature.Word2VecModel;
 import org.apache.spark.ml.linalg.DenseVector;
-import org.apache.spark.ml.tuning.CrossValidatorModel;
+import org.apache.spark.ml.tuning.TrainValidationSplitModel;
 import org.apache.spark.sql.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -163,7 +163,7 @@ public class Word2VecPipeline extends CommonLyricsPipeline {
     }
 
     @Override
-    public CrossValidatorModel classify() {
+    public TrainValidationSplitModel classify() {
         throw new RuntimeException("Not supported for word2Vec");
     }
 }

@@ -19,7 +19,7 @@ import org.apache.spark.ml.tuning.*;
 import org.apache.spark.sql.functions.*;
 import org.apache.spark.ml.param.ParamMap;
 import org.apache.spark.ml.param.ParamPair;
-import org.apache.spark.ml.tuning.CrossValidatorModel;
+import org.apache.spark.ml.tuning.TrainValidationSplitModel;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.springframework.stereotype.Component;
@@ -27,7 +27,7 @@ import org.springframework.stereotype.Component;
 @Component("LogisticRegressionPipeline")
 public class LogisticRegressionPipeline extends CommonLyricsPipeline {
 
-    public CrossValidatorModel classify() {
+    public TrainValidationSplitModel classify() {
         Dataset<Row> sentences = readLyrics();
         sentences = sentences.orderBy(rand());
 
@@ -55,8 +55,7 @@ public class LogisticRegressionPipeline extends CommonLyricsPipeline {
                                     .setOutputCol("features")
                                     .setMinCount(0);
 
-        LogisticRegression logisticRegression = new LogisticRegression()
-                .setLabelCol(LABEL.getName());
+        LogisticRegression logisticRegression = new LogisticRegression();
 
         Pipeline pipeline = new Pipeline().setStages(
                 new PipelineStage[]{
@@ -78,29 +77,20 @@ public class LogisticRegressionPipeline extends CommonLyricsPipeline {
                 .addGrid(logisticRegression.maxIter(), new int[] {100, 200})
                 .build();
 
-        Dataset<Row>[] splits = sentences.randomSplit(new double[] {0.8, 0.2}, 3123);
-        Dataset<Row> training = splits[0];
-        Dataset<Row> test = splits[1];
-
-        CrossValidator crossValidator = new CrossValidator()
+        TrainValidationSplit trainSplitValidator = new TrainValidationSplit()
                 .setEstimator(pipeline)
                 .setEstimatorParamMaps(paramGrid)
-                .setNumFolds(3)
-                .setEvaluator(new MulticlassClassificationEvaluator()
-                        .setLabelCol(LABEL.getName()).setMetricName("accuracy"));
+                .setTrainRatio(0.8)
+                .setEvaluator(new MulticlassClassificationEvaluator());
 
-        CrossValidatorModel model = crossValidator.fit(training);
+        TrainValidationSplitModel model = trainSplitValidator.fit(sentences);
 
         saveModel(model, getModelDirectory());
-
-        model.transform(test)
-                .select("features", LABEL.getName(), "prediction")
-                .show();
 
         return model;
     }
 
-    public Map<String, Object> getModelStatistics(CrossValidatorModel model) {
+    public Map<String, Object> getModelStatistics(TrainValidationSplitModel model) {
         Map<String, Object> modelStatistics = super.getModelStatistics(model);
 
         PipelineModel bestModel = (PipelineModel) model.bestModel();

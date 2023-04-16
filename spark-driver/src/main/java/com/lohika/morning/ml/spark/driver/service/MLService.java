@@ -8,6 +8,7 @@ import org.apache.spark.ml.regression.LinearRegression;
 import org.apache.spark.ml.regression.LinearRegressionModel;
 import org.apache.spark.ml.regression.LinearRegressionTrainingSummary;
 import org.apache.spark.ml.tuning.CrossValidatorModel;
+import org.apache.spark.ml.tuning.TrainValidationSplitModel;
 import org.apache.spark.ml.util.MLWritable;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -98,6 +99,15 @@ public class MLService {
 
         System.out.println("\n------------------------------------------------");
         System.out.println("Loaded cross validation model from " + modelDirectory);
+        System.out.println("------------------------------------------------\n");
+        return model;
+    }
+
+    public TrainValidationSplitModel loadTrainValidationSplitModel(String modelDirectory) {
+        TrainValidationSplitModel model = TrainValidationSplitModel.load(modelDirectory);
+
+        System.out.println("\n------------------------------------------------");
+        System.out.println("Loaded train validation model from " + modelDirectory);
         System.out.println("------------------------------------------------\n");
         return model;
     }
