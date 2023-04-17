@@ -1,47 +1,24 @@
-# Sample Application for "Introduction to ML with Apache Spark MLlib" Presentation
-
-## Presentation
-Link to the presentation: http://www.slideshare.net/tmatyashovsky/introduction-to-ml-with-apache-spark-mllib
+# Music Genre Classification (Spark ML)
 
 ## Idea
 Create few examples to demonstrate regression, classification and clustering to Java developers.
-Main focus is on feature extraction and creation of interesting ML pipelines. 
+Main focus is on feature extraction and creation of interesting ML pipelines.
 
-### DOU Dataset
-DOU (http://dou.ua) stands for developers.org.ua is a main hub for Ukrainian developers.
-It provides anonymous survey for getting information about Ukrainian engineers, their salary, experience, English level, etc. 
-
-#### DOU Dataset Regression
-Given poll results predict salary based on experience, English level and programming language.
-
-Nuances:
-* English level is string, should be converted to numeric, e.g. 0…5
-* Languages are strings, should be exploded to 18 booleans, e.g. java=0|1, python=0|1, etc.
-* Sparse vector [21, [0, 1, 13], [3, 4, 1]] is more preferable
-
-#### DOU Dataset Clustering
-Given poll results predict level (junior, middle, senior) based on experience and English level.
-
-Nuances:
-* English level is string, should be converted to numeric, e.g. 0…5
-* 1$ difference in salary is not as significant as 1 year of experience, so data should be scaled before clustering
-* Dense vector is ok  
-
-### Pop vs. Heavy Metal
-Given verse from verse1 recognize genre.
+### Genre Classification
+Given part of lyric from a lyric recognize genre.
 
 Strategy:
-* Collect raw data set of verse1 (~65k sentences in total):
-  * Abba, Ace of base, Backstreet Boys, Britney Spears, Christina Aguilera, Madonna, etc.
-  * Black Sabbath, In Flames, Iron Maiden, Metallica, Moonspell, Nightwish, Sentenced, etc.
-* Create training set, i.e. label (0|1) + features
+* Collect raw data set of lyrics (~30k sentences in total):
+  * Pop
+  * Country
+  * Blues
+  * Jazz
+  * Rock
+  * Reggae
+  * Hiphop
+  * Metal
+* Create training set, i.e. label (0|1|2|3|4|5|6|7) + features
 * Train logistic regression
-
-### MNIST Dataset
-Given set of images recognize digits.
-
-Nuances:
-* Tranform images into training examples
 
 ## Build, Configure and Run
 
@@ -78,23 +55,8 @@ For instance, minimum set of values that should be specified for your local envi
 ```
 spark.distributed-libraries=<path_to_your_repo>/spark-distributed-library/build/libs/spark-distributed-library-1.0-SNAPSHOT-all.jar
 
-dou.training.set.csv.file.path=<path_to_your_repo>/training-set/dou/2016_may_mini.csv
-dou.regression.model.directory.path=<path_to_your_repo>/training-set/dou/regression-model
-dou.clustering.model.directory.path=<path_to_your_repo>/training-set/dou/clustering-model
-
-verse1.training.set.directory.path=<path_to_your_repo>/training-set/verse1/
-verse1.model.directory.path=<path_to_your_repo>/training-set/verse1/model
-
-mnist.training.set.image.file.path=<path_to_your_repo>/training-set/mnist/train-images-idx3-ubyte
-mnist.training.set.label.file.path=<path_to_your_repo>/training-set/mnist/train-labels-idx1-ubyte
-mnist.test.set.image.file.path=<path_to_your_repo>/training-set/mnist/t10k-images-idx3-ubyte
-mnist.test.set.label.file.path=<path_to_your_repo>/training-set/mnist/t10k-labels-idx1-ubyte
-
-mnist.training.set.parquet.file.path=<path_to_your_repo>/training-set/mnist/training-set.parquet
-mnist.test.set.parquet.file.path=<path_to_your_repo>/training-set/mnist/test-set.parquet
-mnist.model.directory.path=<path_to_your_repo>/training-set/mnist/model
-mnist.validation.set.directory.path=<path_to_your_repo>/training-set/mnist/validation-set
-
+lyrics.training.set.directory.path=data/lyrics/
+lyrics.model.directory.path=data/lyrics/model
 ```
 ### Run
 
