@@ -67,3 +67,23 @@ In order to run the application with custom configuration please add spring.conf
 ```
 spring.config.location=/Users/<your user>/application.properties
 ```
+
+## Presentation and Demo
+
+Can check out the Spark ML model prediction in the following video.
+
+[Watch the video](https://drive.google.com/file/d/1Ou_vmNAkbeLf8k_XJLyk0Em0rUg7OWds/view?usp=share_link)
+
+## Author
+
+Name: [Banura Randika Perera](https://github.com/randikabanura) <br/>
+Linkedin: [randika-banura](https://www.linkedin.com/in/randika-banura/) <br/>
+Email: [randika.banura@gamil.com](mailto:randika.banura@gamil.com) <br/>
+
+## Show your support
+
+Please ⭐️ this repository if this project helped you!
+
+## License
+
+See [LICENSE](LICENSE) © [randikabanura](https://github.com/randikabanura/)
